@@ -1,9 +1,17 @@
-require('dotenv').config();
-const mongoose = require('mongoose');   
-mongoose.connect(process.env.MONGO_ATLAS_CONNECTION_STRING);
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
 
-mongoose.connection.on('error', (error) => console.log("Mongoose connection error: " + error));
+const connectDB = require("./config/db");
+const userRoutes = require("./routes/userRoutes");
 
-const app = require('express');
+connectDB();
+const app = express();
 
-app.listen(8000, () => {console.log('Server is running on port 8000')});
+app.use(cors());
+app.use(express.json());
+
+app.use("/users", userRoutes);
+
+app.listen(5000, () => console.log("Server running on port 5000"));
