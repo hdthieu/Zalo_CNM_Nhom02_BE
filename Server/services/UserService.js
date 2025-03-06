@@ -14,3 +14,11 @@ exports.getUserById = async (userId) => {
 exports.getAllUsers = async () => {
     return await User.find().select("-password");
 };
+
+exports.addUser = async (user) => {
+    return await User.create(user);
+};
+
+exports.upadateUser = async (userId, user) => {
+    const updatedUser = await User.findByIdAndUpdate(userId, user, { new: true });}
+    
