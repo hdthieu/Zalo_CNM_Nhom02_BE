@@ -27,3 +27,14 @@ exports.getAllUsers = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
+
+exports.addNewUser = async (req, res) => {
+
+    try {
+        const user = req.body;
+        const newUser = await userService.addUser(user);
+        res.json({ user: newUser });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
