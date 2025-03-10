@@ -21,4 +21,11 @@ exports.addUser = async (user) => {
 
 exports.upadateUser = async (userId, user) => {
     const updatedUser = await User.findByIdAndUpdate(userId, user, { new: true });}
-    
+
+exports.findById = async (userId) => {
+    return await User.findById(userId);
+}
+
+exports.findByIdAndUpdate = async (userId, user) => {
+    return await User.findByIdAndUpdate(userId, user, { new: true });
+}
