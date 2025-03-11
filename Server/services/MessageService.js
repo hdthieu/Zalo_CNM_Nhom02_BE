@@ -1,6 +1,6 @@
 const Message = require("../models/Message");
 
-const message = reuqire("../models/Message");
+const message = require("../models/Message");
 
 exports.sendMessage = async(senderId, recieverId, content, messageType="text", fileUrl = null) => {
     try {
