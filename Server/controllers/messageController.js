@@ -1,10 +1,18 @@
-// const Message = require("../models/Message");
+const messageService = require("../services/MessageService");
 
 exports.sendMessage = async (req, res) => {
-    const { sender, receiver, content } = req.body;
-    const message = new Message({ sender, receiver, content });
-    await message.save();
-    res.json({ message });
+    try {
+        const senderId = req.user._id;
+        const {receiverId, content, messageType, fileUrl} = req.body;
+
+        if(!receiverId || !content){
+            return res.status(400).json({ error: "Receiver and content are required" });
+        }
+        const result = await messageService.sendMessage(senderId, receiverId, content, messageType, fileUrl);
+        return res.status(result.status).json(result);
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
 };
 
 exports.getMessages = async (req, res) => {
