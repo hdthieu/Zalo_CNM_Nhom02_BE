@@ -1,4 +1,4 @@
-const User = require("../models/User");
+const User = require("../Models/User");
 
 exports.checkUserExists = async (fullName) => {
     const user = await User.findOne({ fullName });
