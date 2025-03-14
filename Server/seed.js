@@ -15,7 +15,7 @@ const generateFakeUsers = (count = 5) => {
     let users = [];
     for (let i = 0; i < count; i++) {
         users.push({
-            username: faker.internet.userName(),
+            fullName: faker.person.fullName(),
             password: faker.internet.password(),
             avatar: faker.image.avatar(),
             status: faker.helpers.arrayElement(["online", "offline"]),

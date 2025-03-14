@@ -44,3 +44,4 @@ exports.acceptFriendRequest = async (senderId, receiverId) => {
         return { error: error.message, status: 500 };
     }
 };
+
