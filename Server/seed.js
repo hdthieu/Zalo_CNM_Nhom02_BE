@@ -1,7 +1,7 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
 const { faker } = require("@faker-js/faker");
-const User = require("./models/User");
+const User = require("./Models/User");
 
 // Kết nối MongoDB
 mongoose.connect(process.env.MONGO_URI, {
@@ -20,7 +20,6 @@ const generateFakeUsers = (count = 5) => {
             avatar: faker.image.avatar(),
             status: faker.helpers.arrayElement(["online", "offline"]),
             friends: [],
-            createdAt: new Date(),
             phoneNumber: faker.phone.number(),
             email: faker.internet.email(),
         });
