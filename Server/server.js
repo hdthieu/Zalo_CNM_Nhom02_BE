@@ -18,5 +18,6 @@ app.use(express.json());
 // use Routes
 app.use("/users", userRoute);
 app.use("/friendRequests", friendRoute);
+app.use("/messages", messageRoute);
 
 app.listen(5000, () => console.log("Server running on port 5000"));
