@@ -1,7 +1,7 @@
 const Message = require("../Models/Message");
 
-const Notification = require("../models/Notification");
-const Group = require("../models/Group");
+const Notification = require("../Models/Notification");
+const Group = require("../Models/Group");
 
 exports.sendMessage = async (
   sender,

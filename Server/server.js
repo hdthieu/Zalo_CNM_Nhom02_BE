@@ -8,6 +8,8 @@ const connectDB = require("./config/db");
 const userRoute = require("./routes/userRoutes");
 const friendRoute = require("./routes/FriendRequestRoutes");
 const messageRoute = require("./routes/MessageRoutes");
+const groupRoute =  require("./routes/GroupRoutes")
+
 connectDB();
 
 const app = express();
@@ -19,5 +21,5 @@ app.use(express.json());
 app.use("/users", userRoute);
 app.use("/friendRequests", friendRoute);
 app.use("/messages", messageRoute);
-
+app.use("/groups",groupRoute);
 app.listen(5000, () => console.log("Server running on port 5000"));
