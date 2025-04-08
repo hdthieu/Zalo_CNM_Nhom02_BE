@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../Models/User");
-
+const crypto = require("crypto");
 const generateToken = require("../config/generateToken");
 
 // dang ky user
@@ -55,6 +55,64 @@ exports.authUser = async ({ email, password }) => {
     throw new Error("Invalid email or password");
   }
 };
+
+exports.getUserProfile = async (userId) => {
+  const user = await User.findById(userId).select("-password");
+  if (!user) {
+    throw new Error("Người dùng không tồn tại");
+  }
+  return user;
+};
+
+exports.updateUserProfile = async (userId, data) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error("Người dùng không tồn tại");
+  }
+
+  user.fullName = data.fullName || user.fullName;
+  user.email = data.email || user.email;
+  user.avatar = data.avatar || user.avatar;
+
+  const updatedUser = await user.save();
+  return {
+    _id: updatedUser._id,
+    fullName: updatedUser.fullName,
+    email: updatedUser.email,
+    avatar: updatedUser.avatar,
+  };
+};
+
+exports.updatePassword = async (userId, oldPassword, newPassword) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error("Người dùng không tồn tại");
+  }
+  const isMatch = await user.matchPassword(oldPassword);
+  if (!isMatch) {
+    throw new Error("Mật khẩu cũ không chính xác");
+  }
+  user.password = newPassword;
+  await user.save();
+  return { message: "Đổi mật khẩu thành công" };
+};
+
+
+
+exports.sendOtpToEmail = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("Email không tồn tại");
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  user.otpCode = otp;
+  user.otpExpire = Date.now() + 5 * 60 * 1000; // 5 phút
+  await user.save();
+
+  return { email: user.email, otp };
+};
+
+
 
 exports.checkUserExists = async (fullName) => {
   const user = await User.findOne({ fullName });
