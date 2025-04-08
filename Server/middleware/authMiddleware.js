@@ -1,18 +1,29 @@
-const jwt = require('jsonwebtoken');
-const userService = require('../services/UserService');
+const jwt = require("jsonwebtoken");
+const User = require("../Models/User");
+const asyncHandler = require("express-async-handler");
 
-exports.authMiddleware = async (req, res, next) => {
-    const token = req.header('Authorization');
+const protect = asyncHandler(async (req, res, next) => {
+  let token;
 
-    if(!token){
-        return res.status(401).json({ error: "Access denied. No token provided" });
-    }
-
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = await userService.findById(decoded._id).select("-password");
-        next();
+      token = req.headers.authorization.split(" ")[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = await User.findById(decoded.id).select("-password");
+
+      next();
     } catch (error) {
-        res.status(400).json({ error: "Invalid token" });
+      res.status(401);
+      throw new Error("Not authorized, token failed");
     }
-}
+  }
+
+  if (!token) {
+    res.status(401);
+    throw new Error("Not authorized, no token");
+  }
+});
+module.exports = { protect };
