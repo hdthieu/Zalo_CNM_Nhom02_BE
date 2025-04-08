@@ -21,35 +21,6 @@ exports.loginController = asyncHandler(async (req, res) => {
   }
 });
 
-
-exports.checkUser = async (req, res) => {
-  try {
-    const { username } = req.params;
-    const exists = await userService.checkUserExists(username);
-    res.json({ exists });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
-
-exports.getUser = async (req, res) => {
-  try {
-    const user = await userService.getUserById(req.params.userId);
-    res.json({ user });
-  } catch (error) {
-    res.status(404).json({ error: error.message });
-  }
-};
-
-exports.getAllUsers = async (req, res) => {
-  try {
-    const users = await userService.getAllUsers();
-    res.json({ users });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
-
 exports.addNewUser = async (req, res) => {
   try {
     const user = req.body;
@@ -59,8 +30,6 @@ exports.addNewUser = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
-
-
 
 exports.forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
@@ -103,17 +72,50 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
 
 
 exports.updatePassword = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user.id);
-
   const { oldPassword, newPassword } = req.body;
 
-  if (!user || !(await user.matchPassword(oldPassword))) {
-    res.status(401);
-    throw new Error("Mật khẩu cũ không chính xác");
-  }
+  const result = await userService.updatePassword(req.user.id, oldPassword, newPassword);
 
-  user.password = newPassword; // pre-save hook sẽ hash lại
-  await user.save();
-
-  res.json({ message: "Đổi mật khẩu thành công" });
+  res.json(result);
 });
+
+exports.getUserProfile = asyncHandler(async (req, res) => {
+  const user = await userService.getUserProfile(req.user.id);
+  res.json(user);
+});
+
+exports.updateUserProfile = asyncHandler(async (req, res) => {
+  const updated = await userService.updateUserProfile(req.user.id, req.body);
+  res.json(updated);
+});
+
+
+
+
+exports.checkUser = async (req, res) => {
+  try {
+    const { username } = req.params;
+    const exists = await userService.checkUserExists(username);
+    res.json({ exists });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+exports.getUser = async (req, res) => {
+  try {
+    const user = await userService.getUserById(req.params.userId);
+    res.json({ user });
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+};
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await userService.getAllUsers();
+    res.json({ users });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
