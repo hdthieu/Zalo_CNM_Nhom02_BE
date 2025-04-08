@@ -15,8 +15,8 @@ const UserSchema = new mongoose.Schema(
     },
     status: { type: String, enum: ["online", "offline"], default: "offline" },
     friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    resetPasswordToken: String,
-    resetPasswordExpire: Date,
+    otpCode: String,
+    otpExpire: Date,
   },
   { timestamps: true }
 );

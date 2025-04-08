@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../Models/User");
-
+const crypto = require("crypto");
 const generateToken = require("../config/generateToken");
 
 // dang ky user
@@ -95,6 +95,21 @@ exports.updatePassword = async (userId, oldPassword, newPassword) => {
   user.password = newPassword;
   await user.save();
   return { message: "Đổi mật khẩu thành công" };
+};
+
+
+
+exports.sendOtpToEmail = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("Email không tồn tại");
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  user.otpCode = otp;
+  user.otpExpire = Date.now() + 5 * 60 * 1000; // 5 phút
+  await user.save();
+
+  return { email: user.email, otp };
 };
 
 
