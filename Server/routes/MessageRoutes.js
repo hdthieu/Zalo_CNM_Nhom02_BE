@@ -1,12 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const {
-    sendMessage, getMessages
+    sendMessage, getMessages, recallMessage, deleteMessageForMe
   } = require("../controllers/MessageController");
 const { protect } = require("../middleware/authMiddleware");
 
 router.post("/", protect, sendMessage);
 router.get("/:chatId", protect, getMessages);
+router.put("/recall/:messageId", protect, recallMessage);
+router.put("/delete-for-me/:messageId", protect, deleteMessageForMe);
+
 // routes/MessageRoutes.js
 
 module.exports = router;

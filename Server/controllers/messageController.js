@@ -4,42 +4,29 @@ const messageService = require("../services/MessageService");
 const Message = require("../Models/Message");
 const Chat = require("../Models/ChatModel");
 exports.sendMessage = asyncHandler(async (req, res) => {
-  const { content, chatId } = req.body;
+  const { content, chatId, type, fileUrl } = req.body;
 
-  if (!content || !chatId) {
-    return res.status(400).json({ message: "Invalid data passed into request" });
+  if (!content && !fileUrl) {
+    return res.status(400).json({ message: "Nội dung không được trống" });
   }
 
-  const newMessage = new Message({
+  const newMsg = await messageService.sendMessage({
     sender: req.user._id,
-    content: content,
-    chat: chatId,
+    content,
+    chatId,
+    type: type || "text",
+    fileUrl,
   });
 
-  await newMessage.save();
-
-  // Dùng findById để populate thay vì execPopulate
-  let fullMessage = await Message.findById(newMessage._id)
-    .populate("sender", "fullName email avatar")
-    .populate({
-      path: "chat",
-      populate: {
-        path: "users",
-        select: "fullName email avatar",
-      },
-    });
-
-  // Cập nhật latestMessage trong Chat
-  await Chat.findByIdAndUpdate(chatId, { latestMessage: fullMessage });
-
-  // Gửi socket đến người trong chat (nếu có)
+  // Emit socket
   if (req.io) {
-    req.io.to(chatId).emit("messageReceived", fullMessage);
+    req.io.to(chatId).emit("messageReceived", newMsg);
     console.log("📤 Đã emit messageReceived đến room:", chatId);
   }
 
-  res.status(201).json(fullMessage);
+  res.status(201).json(newMsg);
 });
+
 
 
 exports.getMessages = asyncHandler(async (req, res) => {
@@ -49,40 +36,71 @@ exports.getMessages = asyncHandler(async (req, res) => {
   res.status(200).json(messages);
 });
 
-exports.deleteMessage = asyncHandler(async (req, res) => {
+// exports.recallMessage = asyncHandler(async (req, res) => {
+//   const { messageId } = req.params;
+
+//   const recalledMsg = await messageService.recallMessage({
+//     messageId,
+//     userId: req.user._id,
+//   });
+
+//   // Nếu không có chat thì báo lỗi
+//   if (!recalledMsg || !recalledMsg.chat) {
+//     return res.status(400).json({ message: "Không tìm thấy cuộc trò chuyện để emit" });
+//   }
+
+//   // Emit đến room tương ứng
+//   req.io.to(recalledMsg.chat._id.toString()).emit("messageRecalled", recalledMsg);
+
+//   res.json({ message: "Đã thu hồi tin nhắn", data: recalledMsg });
+// });
+
+exports.recallMessage = asyncHandler(async (req, res) => {
   const { messageId } = req.params;
-  const deletedId = await messageService.deleteMessage(messageId, req.user._id);
-  res.status(200).json({ deleted: deletedId });
+  const userId = req.user._id; // ID người dùng từ JWT
+
+  // Gọi service để xử lý recall message
+  const result = await messageService.recallMessage({ messageId, userId });
+
+  // Kiểm tra kết quả trả về từ service
+  if (result.error) {
+    return res.status(result.statusCode).json({ message: result.error });
+  }
+
+  // Nếu thành công, trả về dữ liệu
+  return res.json({ message: result.message, data: result.data });
 });
 
-exports.revokeMessage = asyncHandler(async (req, res) => {
+
+// Xóa một phía
+exports.deleteMessageForMe = asyncHandler(async (req, res) => {
   const { messageId } = req.params;
-
-  const updated = await messageService.revokeMessage(messageId, req.user._id);
-
-  if (req.io) req.io.to(updated.chat._id.toString()).emit("messageRevoked", updated);
-
-  res.status(200).json(updated);
-});
-
-exports.markSeen = asyncHandler(async (req, res) => {
-  const { messageId } = req.params;
-
-  const updated = await messageService.markAsSeen(messageId);
-  res.status(200).json(updated);
-});
-
-exports.forwardMessage = asyncHandler(async (req, res) => {
-  const { messageId, toChatId } = req.body;
-
-  const newMsg = await messageService.forwardMessage({
+  const deletedMsg = await messageService.deleteMessageForUser({
     messageId,
-    toChatId,
-    sender: req.user._id,
+    userId: req.user._id,
   });
 
-  if (req.io) req.io.to(toChatId).emit("messageReceived", newMsg);
-
-  res.status(201).json(newMsg);
+  res.json({ message: "Đã xóa tin nhắn khỏi tài khoản bạn", data: deletedMsg });
 });
+
+// exports.markSeen = asyncHandler(async (req, res) => {
+//   const { messageId } = req.params;
+
+//   const updated = await messageService.markAsSeen(messageId);
+//   res.status(200).json(updated);
+// });
+
+// exports.forwardMessage = asyncHandler(async (req, res) => {
+//   const { messageId, toChatId } = req.body;
+
+//   const newMsg = await messageService.forwardMessage({
+//     messageId,
+//     toChatId,
+//     sender: req.user._id,
+//   });
+
+//   if (req.io) req.io.to(toChatId).emit("messageReceived", newMsg);
+
+//   res.status(201).json(newMsg);
+// });
 

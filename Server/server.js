@@ -10,7 +10,7 @@ const userRoute = require("./routes/userRoutes");
 const friendRoute = require("./routes/FriendRequestRoutes");
 const messageRoute = require("./routes/MessageRoutes");
 const chatModelRoutes = require("./routes/ChatModelRoutes");
-
+const Message = require("./Models/Message");
 connectDB();
 
 const app = express();
@@ -19,7 +19,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "*", 
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
   },
 });
 
@@ -32,6 +32,29 @@ app.use("/friendRequests", friendRoute);
 app.use("/api/chat", chatModelRoutes);
 app.use("/api/message", messageRoute);
 
+// io.on("connection", (socket) => {
+//   console.log("User connected:", socket.id);
+
+//   socket.on("joinChat", (chatId) => {
+//     socket.join(chatId);
+//     console.log(`User ${socket.id} joined chat ${chatId}`);
+//   });
+
+//   socket.on("newMessage", (newMessage) => {
+//     const chat = newMessage.chat;
+//     if (!chat.users) return console.log("No users in chat");
+
+//     chat.users.forEach((user) => {
+//       const userId = user._id?.toString?.() || user.toString();
+//       if (userId === newMessage.sender._id?.toString()) return;
+
+//       // Phát tin nhắn đến room chat
+//       io.to(chat._id).emit("messageReceived", newMessage);
+//     });
+
+//     console.log("Emitted message to room:", chat._id);
+//   });
+// });
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
@@ -47,13 +70,24 @@ io.on("connection", (socket) => {
     chat.users.forEach((user) => {
       const userId = user._id?.toString?.() || user.toString();
       if (userId === newMessage.sender._id?.toString()) return;
-
-      // Phát tin nhắn đến room chat
       io.to(chat._id).emit("messageReceived", newMessage);
     });
 
     console.log("Emitted message to room:", chat._id);
   });
+
+socket.on("recallMessage", async (messageId) => {
+  const message = await Message.findById(messageId).populate("chat");
+
+  if (!message || !message.chat) {
+    console.error("Không tìm thấy tin nhắn hoặc cuộc trò chuyện");
+    return;
+  }
+
+  // Phát sự kiện messageRecalled với thông tin tin nhắn đầy đủ
+  io.to(message.chat._id.toString()).emit("messageRecalled", message);
+});
+
 });
 
   
