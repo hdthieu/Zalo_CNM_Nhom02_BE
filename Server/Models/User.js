@@ -15,6 +15,8 @@ const UserSchema = new mongoose.Schema(
     },
     status: { type: String, enum: ["online", "offline"], default: "offline" },
     friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    gender: {type: String},
+    dateOfBirth: {type: Date},
     otpCode: String,
     otpExpire: Date,
   },

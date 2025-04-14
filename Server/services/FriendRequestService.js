@@ -1,6 +1,6 @@
 const friendRequest = require("../Models/FriendRequest");
 const userService = require("../services/UserService");
-
+const User = require("../Models/User");
 exports.sendFriendRequest = async (senderId, receiverId) => {
   try {
     const sender = await userService.findById(senderId);

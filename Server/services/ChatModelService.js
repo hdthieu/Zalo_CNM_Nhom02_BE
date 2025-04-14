@@ -94,3 +94,22 @@ exports.addToGroupService = async (chatId, userId) => {
   if (!added) throw new Error("Chat not found");
   return added;
 };
+
+exports.accessChatSend = async (currentUserId, targetUserId) => {
+  let existingChat = await Chat.findOne({
+    isGroupChat: false,
+    users: { $all: [currentUserId, targetUserId] },
+  }).populate("users", "-password");
+
+  if (existingChat) return existingChat;
+
+  const newChat = await Chat.create({
+    chatName: "chat",
+    isGroupChat: false,
+    users: [currentUserId, targetUserId],
+  });
+
+  return await Chat.findById(newChat._id).populate("users", "-password");
+};
+
+
