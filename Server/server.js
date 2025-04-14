@@ -33,31 +33,29 @@ app.use("/api/chat", chatModelRoutes);
 app.use("/api/message", messageRoute);
 
 io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
-  
-    socket.on("joinChat", (chatId) => {
-      socket.join(chatId);
-      console.log(`User ${socket.id} joined chat ${chatId}`);
-    });
-  
-    socket.on("newMessage", (newMessage) => {
-        const chat = newMessage.chat;
-      
-        if (!chat.users) return console.log("❌ No users in chat");
-      
-        chat.users.forEach((user) => {
-          const userId = user._id?.toString?.() || user.toString();
-      
-          if (userId === newMessage.sender._id?.toString()) return;
-      
-          // Gửi socket đến room
-          io.to(chat._id).emit("messageReceived", newMessage);
-        });
-      
-        console.log("📤 Emitted message to room:", chat._id);
-      });
-      
+  console.log("User connected:", socket.id);
+
+  socket.on("joinChat", (chatId) => {
+    socket.join(chatId);
+    console.log(`User ${socket.id} joined chat ${chatId}`);
   });
+
+  socket.on("newMessage", (newMessage) => {
+    const chat = newMessage.chat;
+    if (!chat.users) return console.log("No users in chat");
+
+    chat.users.forEach((user) => {
+      const userId = user._id?.toString?.() || user.toString();
+      if (userId === newMessage.sender._id?.toString()) return;
+
+      // Phát tin nhắn đến room chat
+      io.to(chat._id).emit("messageReceived", newMessage);
+    });
+
+    console.log("Emitted message to room:", chat._id);
+  });
+});
+
   
   
 // Truyền io vào req
@@ -70,6 +68,7 @@ app.use((req, res, next) => {
 // Chạy server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
 
 
 
