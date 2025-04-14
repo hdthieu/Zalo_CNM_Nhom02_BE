@@ -1,12 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const {
-    sendMessage, getMessages
-  } = require("../controllers/MessageController");
+const { sendMessage, getMessages, recallMessage, deleteMessageForMe } = require("../controllers/MessageController");
 const { protect } = require("../middleware/authMiddleware");
+const { upload } = require("../config/s3"); // multer-s3 middleware
 
-router.post("/", protect, sendMessage);
+// Cho phép gửi text + file (ảnh, tài liệu) trong 1 API
+router.post("/", protect, upload.single("file"), sendMessage);
 router.get("/:chatId", protect, getMessages);
-// routes/MessageRoutes.js
+router.put("/recall/:messageId", protect, recallMessage);
+router.put("/delete-for-me/:messageId", protect, deleteMessageForMe);
 
 module.exports = router;
