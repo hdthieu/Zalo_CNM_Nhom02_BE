@@ -2,7 +2,7 @@ const asyncHandler = require("express-async-handler");
 const chatService = require("../services/ChatModelService");
 
 exports.accessChat = asyncHandler(async (req, res) => {
-  const chat = await chatService.accessChatService(req.user, req.body.userId);
+  const chat = await chatService.accessChatSend(req.user._id, req.body.userId);
   res.status(chat._id ? 200 : 201).json(chat);
 });
 
@@ -45,3 +45,6 @@ exports.addToGroup = asyncHandler(async (req, res) => {
   const updatedChat = await chatService.addToGroupService(chatId, userId);
   res.status(200).json(updatedChat);
 });
+
+
+

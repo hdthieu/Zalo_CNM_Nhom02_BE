@@ -1,8 +1,12 @@
-// const express = require("express");
-// const router = express.Router();
-// const messageController = require("../controllers/MessageController");
+const express = require("express");
+const router = express.Router();
+const {
+    sendMessage, getMessages
+  } = require("../controllers/MessageController");
+const { protect } = require("../middleware/authMiddleware");
 
-// router.post("/send", messageController.sendMessage);
-// router.get("/:userId/:friendId", messageController.getMessages);    
+router.post("/", protect, sendMessage);
+router.get("/:chatId", protect, getMessages);
+// routes/MessageRoutes.js
 
-// module.exports = router;
+module.exports = router;

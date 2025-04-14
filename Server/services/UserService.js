@@ -7,16 +7,16 @@ const generateToken = require("../config/generateToken");
 
 exports.registerUser = async ({ fullName, email, password, avatar }) => {
   if (!fullName || !email || !password) {
-    throw new Error("Please fill all the fields");
+    throw new Error("Diền đầy đủ thông tin");
   }
 
   const userExists = await User.findOne({ email });
   if (userExists) {
-    throw new Error("Email already exists");
+    throw new Error("Email đã tồn tại");
   }
 
   if (password.length < 8) {
-    throw new Error("Password must be at least 8 characters");
+    throw new Error("Mật khẩu phải có ít nhất 8 ký tự");
   }
 
   const user = await User.create({ fullName, email, password, avatar });
@@ -33,6 +33,8 @@ exports.registerUser = async ({ fullName, email, password, avatar }) => {
     avatar: user.avatar,
     status: user.status,
     friends: user.friends,
+    gender:  user.gender,
+    dateOfBirth: user.dateOfBirth,
     token: generateToken(user._id),
   };
 };
@@ -41,7 +43,6 @@ exports.authUser = async ({ email, password }) => {
   if (!email || !password) {
     throw new Error("Please fill all the fields");
   }
-
   const user = await User.findOne({ email });
   if (user && (await user.matchPassword(password))) {
     return {
@@ -52,7 +53,7 @@ exports.authUser = async ({ email, password }) => {
       token: generateToken(user._id),
     };
   } else {
-    throw new Error("Invalid email or password");
+    throw new Error("Sai mật khẩu hoặc email");
   }
 };
 
