@@ -6,7 +6,7 @@ const {
   addNewUser,
   registerUser,
   loginController,
-  resetPassword, 
+  resetPassword, findUsers,
   updatePassword, getUserProfile , updateUserProfile, verifyOtp, sendOtp, resetPasswordForgot
 } = require("../controllers/UserController");
 const { protect } = require("../middleware/authMiddleware");
@@ -29,4 +29,5 @@ router.post("/reset-password/:token", resetPassword);
 router.post("/send-otp", sendOtp);
 router.post("/verify-otp", verifyOtp);
 router.post("/reset-password-forgot", resetPasswordForgot);
+router.route("/").get(protect, findUsers);
 module.exports = router;

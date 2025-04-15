@@ -4,10 +4,33 @@ const crypto = require("crypto");
 const generateToken = require("../config/generateToken");
 
 // dang ky user
+exports.registerUser = async ({
+  fullName,
+  email,
+  password,
+  avatar,
+  gender,
+  phoneNumber,
+  dateOfBirth
+}) => {
+  // Kiểm tra các trường bắt buộc
+  if (!fullName || !email || !password || !gender || !dateOfBirth) {
+    throw new Error("Vui lòng điền đầy đủ thông tin bắt buộc (fullName | email | password | gender | dateOfBirth)");
+  }
 
-exports.registerUser = async ({ fullName, email, password, avatar }) => {
-  if (!fullName || !email || !password) {
-    throw new Error("Diền đầy đủ thông tin");
+  if (password.length < 8) {
+    throw new Error("Mật khẩu phải có ít nhất 8 ký tự");
+  }
+
+  // Kiểm tra định dạng dateOfBirth (tuỳ chọn)
+  if (isNaN(Date.parse(dateOfBirth))) {
+    throw new Error("Ngày sinh không hợp lệ");
+  }
+
+  // Kiểm tra giới tính hợp lệ
+  const allowedGenders = ["male", "female"];
+  if (!allowedGenders.includes(gender)) {
+    throw new Error("Giới tính không hợp lệ");
   }
 
   const userExists = await User.findOne({ email });
@@ -15,13 +38,18 @@ exports.registerUser = async ({ fullName, email, password, avatar }) => {
     throw new Error("Email đã tồn tại");
   }
 
-  if (password.length < 8) {
-    throw new Error("Mật khẩu phải có ít nhất 8 ký tự");
-  }
+  const user = await User.create({
+    fullName,
+    email,
+    password,
+    avatar,
+    gender,
+    phoneNumber,
+    dateOfBirth,
+  });
 
-  const user = await User.create({ fullName, email, password, avatar });
   if (!user) {
-    throw new Error("Invalid user data");
+    throw new Error("Không thể tạo người dùng");
   }
 
   return {
@@ -33,7 +61,7 @@ exports.registerUser = async ({ fullName, email, password, avatar }) => {
     avatar: user.avatar,
     status: user.status,
     friends: user.friends,
-    gender:  user.gender,
+    gender: user.gender,
     dateOfBirth: user.dateOfBirth,
     token: generateToken(user._id),
   };

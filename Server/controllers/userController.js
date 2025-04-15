@@ -157,3 +157,17 @@ exports.getAllUsers = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+exports.findUsers = asyncHandler(async (req, res) => {
+  const keyword = req.query.search
+    ? {
+        $or: [
+          { fullName: { $regex: req.query.search, $options: "i" } },
+          { email: { $regex: req.query.search, $options: "i" } },
+        ],
+      }
+    : {};
+  const users = await User.find(keyword).find({ _id: { $ne: req.user._id } });
+  res.send(users);
+  //console.log(users);
+});

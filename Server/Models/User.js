@@ -6,17 +6,17 @@ const UserSchema = new mongoose.Schema(
   {
     fullName: { type: String, required: true },
     password: { type: String, required: true },
-    phoneNumber: { type: String },
+    phoneNumber: { type: String, default: "" },
     email: { type: String, required: true, unique: true },
     avatar: {
       type: String,
       default:
         "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
     },
-    status: { type: String, enum: ["online", "offline"], default: "offline" },
+    status: { type: String, enum: ["online", "offline"], default: "online" },
     friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    gender: {type: String},
-    dateOfBirth: {type: Date},
+    gender: {type: String, enum: ["male", "female"], default: "male", required: true},
+    dateOfBirth: {type: Date, required: true},
     otpCode: String,
     otpExpire: Date,
   },
