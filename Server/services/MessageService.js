@@ -114,18 +114,12 @@ exports.getAllMessages = async (chatId, userId) => {
 
 exports.recallMessage = async ({ messageId, userId }) => {
   const message = await Message.findById(messageId).populate("chat");
-
-  // Kiểm tra nếu không có tin nhắn
   if (!message) {
     return { error: "Message not found", statusCode: 404 };
   }
-
-  // Kiểm tra quyền thu hồi tin nhắn
   if (message.sender.toString() !== userId.toString()) {
     return { error: "You are not authorized to recall this message", statusCode: 403 };
   }
-
-  // Kiểm tra thu hồi tin nhắn trong ngày
   const createdAt = new Date(message.createdAt);
   const now = new Date();
   const sameDay =
@@ -136,13 +130,9 @@ exports.recallMessage = async ({ messageId, userId }) => {
   if (!sameDay) {
     return { error: "You can only recall messages sent today", statusCode: 403 };
   }
-
-  // Kiểm tra nếu không có cuộc trò chuyện
   if (!message.chat) {
     return { error: "Chat not found", statusCode: 400 };
   }
-
-  // Đánh dấu tin nhắn đã thu hồi
   message.isRecalled = true;
   message.recalledAt = new Date();
   await message.save();
@@ -153,7 +143,7 @@ exports.recallMessage = async ({ messageId, userId }) => {
 exports.deleteMessageForUser = async ({ messageId, userId }) => {
   const message = await Message.findById(messageId);
   if (!message) {
-    throw new Error("Message not found");
+    return { error: "Message not found", statusCode: 404 };
   }
 
   const msgDate = new Date(message.createdAt);
@@ -165,7 +155,7 @@ exports.deleteMessageForUser = async ({ messageId, userId }) => {
     msgDate.getFullYear() === today.getFullYear();
 
   if (!isSameDay) {
-    throw new Error("Chỉ được xóa tin nhắn trong ngày hôm nay");
+    return { error: "Chỉ được xóa tin nhắn trong ngày hôm nay", statusCode: 403 };
   }
 
   if (!message.deletedFor.includes(userId)) {
@@ -173,8 +163,38 @@ exports.deleteMessageForUser = async ({ messageId, userId }) => {
     await message.save();
   }
 
-  return message;
+  return { message };
 };
+
+
+exports.updateMessageContent = async ({ messageId, userId, newContent }) => {
+  const message = await Message.findById(messageId);
+  if (!message) {
+    return { error: "Không tìm thấy tin nhắn", statusCode: 404 };
+  }
+
+  if (String(message.sender) !== String(userId)) {
+    return { error: "Bạn không có quyền chỉnh sửa tin nhắn này", statusCode: 403 };
+  }
+
+  const createdAt = new Date(message.createdAt);
+  const today = new Date();
+
+  const isSameDay =
+    createdAt.getDate() === today.getDate() &&
+    createdAt.getMonth() === today.getMonth() &&
+    createdAt.getFullYear() === today.getFullYear();
+
+  if (!isSameDay) {
+    return { error: "Chỉ có thể chỉnh sửa tin nhắn trong ngày hôm nay", statusCode: 403 };
+  }
+
+  message.content = newContent;
+  await message.save();
+
+  return { message }; 
+};
+
 
 
 exports.forwardMessage = async ({ messageId, toChatId, sender }) => {

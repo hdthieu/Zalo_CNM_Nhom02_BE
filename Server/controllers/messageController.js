@@ -127,17 +127,11 @@ exports.getMessages = asyncHandler(async (req, res) => {
 
 exports.recallMessage = asyncHandler(async (req, res) => {
   const { messageId } = req.params;
-  const userId = req.user._id; // ID người dùng từ JWT
-
-  // Gọi service để xử lý recall message
+  const userId = req.user._id;
   const result = await messageService.recallMessage({ messageId, userId });
-
-  // Kiểm tra kết quả trả về từ service
   if (result.error) {
     return res.status(result.statusCode).json({ message: result.error });
   }
-
-  // Nếu thành công, trả về dữ liệu
   return res.json({ message: result.message, data: result.data });
 });
 
@@ -145,14 +139,38 @@ exports.recallMessage = asyncHandler(async (req, res) => {
 // Xóa tin nhắn ở phía tôi (người gửi) (không xóa ở phía người nhận) (chỉ trong ngày)
 exports.deleteMessageForMe = asyncHandler(async (req, res) => {
   const { messageId } = req.params;
-  const deletedMsg = await messageService.deleteMessageForUser({
+  const result = await messageService.deleteMessageForUser({
     messageId,
     userId: req.user._id,
   });
 
-  res.json({ message: "Đã xóa tin nhắn khỏi tài khoản bạn", data: deletedMsg });
+  if (result.error) {
+    return res.status(result.statusCode || 400).json({ message: result.error });
+  }
+
+  res.json({ message: "Đã xóa tin nhắn khỏi tài khoản bạn", data: result.message });
 });
 
+
+exports.editMessage = asyncHandler(async (req, res) => {
+  const { messageId } = req.params;
+  const { newContent } = req.body;
+
+  const result = await messageService.updateMessageContent({
+    messageId,
+    userId: req.user._id,
+    newContent,
+  });
+
+  if (result.error) {
+    return res.status(result.statusCode || 400).json({ message: result.error });
+  }
+
+  res.json({
+    message: "Đã chỉnh sửa tin nhắn thành công",
+    data: result.message,
+  });
+});
 
 
 // exports.markSeen = asyncHandler(async (req, res) => {
