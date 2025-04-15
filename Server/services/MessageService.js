@@ -69,8 +69,16 @@ exports.sendMessage = async ({ sender, content, chatId, type, fileUrl, fileName,
   return fullMessage;
 };
 
-exports.getAllMessages = async (chatId) => {
-  return await Message.find({ chat: chatId })
+// exports.getAllMessages = async (chatId) => {
+//   return await Message.find({ chat: chatId })
+//     .populate("sender", "fullName email avatar")
+//     .populate("chat");
+// };
+exports.getAllMessages = async (chatId, userId) => {
+  return await Message.find({
+    chat: chatId,
+    deletedFor: { $ne: userId }, 
+  })
     .populate("sender", "fullName email avatar")
     .populate("chat");
 };
@@ -141,10 +149,23 @@ exports.recallMessage = async ({ messageId, userId }) => {
 
   return { message: "Message recalled successfully", data: message };
 };
-exports.deleteMessageForUser = async({messageId, userId}) => {
+// Xóa tin nhắn ở phía tôi (người gửi) (không xóa ở phía người nhận) (chỉ trong ngày)
+exports.deleteMessageForUser = async ({ messageId, userId }) => {
   const message = await Message.findById(messageId);
-  if(!message) {
-    return res.status(404).json({ message: "Message not found" });
+  if (!message) {
+    throw new Error("Message not found");
+  }
+
+  const msgDate = new Date(message.createdAt);
+  const today = new Date();
+
+  const isSameDay =
+    msgDate.getDate() === today.getDate() &&
+    msgDate.getMonth() === today.getMonth() &&
+    msgDate.getFullYear() === today.getFullYear();
+
+  if (!isSameDay) {
+    throw new Error("Chỉ được xóa tin nhắn trong ngày hôm nay");
   }
 
   if (!message.deletedFor.includes(userId)) {
@@ -153,7 +174,8 @@ exports.deleteMessageForUser = async({messageId, userId}) => {
   }
 
   return message;
-}
+};
+
 
 exports.forwardMessage = async ({ messageId, toChatId, sender }) => {
   const original = await Message.findById(messageId);

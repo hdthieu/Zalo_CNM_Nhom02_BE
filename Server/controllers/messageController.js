@@ -85,17 +85,24 @@ exports.sendMessage = asyncHandler(async (req, res) => {
   // Emit thông báo tin nhắn mới
   if (req.io) {
     req.io.to(chatId).emit("messageReceived", newMsg);
-    console.log("📤 Emit messageReceived:", chatId);
+    console.log("Emit messageReceived:", chatId);
   }
 
   res.status(201).json(newMsg);
 });
 
 
+// exports.getMessages = asyncHandler(async (req, res) => {
+//   const { chatId } = req.params;
+
+//   const messages = await messageService.getAllMessages(chatId);
+//   res.status(200).json(messages);
+// });
 exports.getMessages = asyncHandler(async (req, res) => {
   const { chatId } = req.params;
+  const userId = req.user._id; // 👈 cần lấy userId từ token
 
-  const messages = await messageService.getAllMessages(chatId);
+  const messages = await messageService.getAllMessages(chatId, userId);
   res.status(200).json(messages);
 });
 
@@ -135,7 +142,7 @@ exports.recallMessage = asyncHandler(async (req, res) => {
 });
 
 
-// Xóa một phía
+// Xóa tin nhắn ở phía tôi (người gửi) (không xóa ở phía người nhận) (chỉ trong ngày)
 exports.deleteMessageForMe = asyncHandler(async (req, res) => {
   const { messageId } = req.params;
   const deletedMsg = await messageService.deleteMessageForUser({
