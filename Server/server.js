@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
-
+const Message = require("./Models/Message");
 const connectDB = require("./config/db");
 const userRoute = require("./routes/userRoutes");
 const friendRoute = require("./routes/FriendRequestRoutes");
@@ -83,7 +83,7 @@ server.listen(process.env.PORT || 5000, () => {
 // const friendRoute = require("./routes/FriendRequestRoutes");
 // const messageRoute = require("./routes/MessageRoutes");
 // const chatModelRoutes = require("./routes/ChatModelRoutes");
-// const Message = require("./Models/Message");
+
 // connectDB();
 
 // const app = express();
