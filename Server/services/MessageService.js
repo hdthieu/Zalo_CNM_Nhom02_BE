@@ -166,7 +166,6 @@ exports.deleteMessageForUser = async ({ messageId, userId }) => {
   return { message };
 };
 
-
 exports.updateMessageContent = async ({ messageId, userId, newContent }) => {
   const message = await Message.findById(messageId);
   if (!message) {
@@ -190,10 +189,16 @@ exports.updateMessageContent = async ({ messageId, userId, newContent }) => {
   }
 
   message.content = newContent;
+  message.isEdited = true;
   await message.save();
 
-  return { message }; 
+  const fullMessage = await Message.findById(message._id)
+    .populate("chat") 
+    .populate("sender", "fullName email avatar _id");
+
+  return { message: fullMessage };
 };
+
 
 
 

@@ -59,10 +59,22 @@ io.on("connection", (socket) => {
     if (!message || !message.chat) {
       console.error("Không tìm thấy tin nhắn hoặc cuộc trò chuyện");
       return;
-    }
+    }  
 
     io.to(message.chat._id.toString()).emit("messageRecalled", message);
   });
+  socket.on("messageEdited", (updatedMessage) => {
+    // Kiểm tra xem updatedMessage.chat có tồn tại không
+    if (!updatedMessage.chat || !updatedMessage.chat._id) {
+      console.error("Chat ID is missing in the updated message.");
+      return; 
+    }
+  
+    const chatId = updatedMessage.chat._id.toString();
+    socket.to(chatId).emit("messageEdited", updatedMessage);
+  });
+  
+  
 });
 
 server.listen(process.env.PORT || 5000, () => {

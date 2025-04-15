@@ -53,7 +53,6 @@ const { s3Client } = require("../config/s3");
 //   res.status(201).json(newMsg);
 // });
 
-
 exports.sendMessage = asyncHandler(async (req, res) => {
   const { content, chatId, type } = req.body;
   const file = req.file; // Nếu có file
@@ -151,10 +150,9 @@ exports.deleteMessageForMe = asyncHandler(async (req, res) => {
   res.json({ message: "Đã xóa tin nhắn khỏi tài khoản bạn", data: result.message });
 });
 
-
 exports.editMessage = asyncHandler(async (req, res) => {
   const { messageId } = req.params;
-  const { newContent } = req.body;
+  const { content: newContent } = req.body;
 
   const result = await messageService.updateMessageContent({
     messageId,
@@ -165,12 +163,9 @@ exports.editMessage = asyncHandler(async (req, res) => {
   if (result.error) {
     return res.status(result.statusCode || 400).json({ message: result.error });
   }
-
-  res.json({
-    message: "Đã chỉnh sửa tin nhắn thành công",
-    data: result.message,
-  });
+  res.json(result.message);
 });
+
 
 
 // exports.markSeen = asyncHandler(async (req, res) => {
