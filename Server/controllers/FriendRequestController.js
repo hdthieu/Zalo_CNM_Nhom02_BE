@@ -19,14 +19,4 @@ exports.acceptFriendRequest = async (req, res) => {
   res.status(result.status).json({ message: result.message });
 };
 
-exports.searchFriendController = async (req, res) => {
-  const userID = req.user.id;
-  const query = req.query.id;
 
-  const result = await friendRequestService.searchFriendRequest(userID, query);
-
-  if (result.error)
-    return res.status(result.status).json({ error: result.error });
-  
-  return res.status(result.status).json({ users: result.users });
-};
