@@ -173,3 +173,9 @@ exports.findUsers = asyncHandler(async (req, res) => {
 
   res.send(users);
 });
+
+exports.getListFriends = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const friends = await userService.listFriends(userId);
+  res.json(friends);
+});

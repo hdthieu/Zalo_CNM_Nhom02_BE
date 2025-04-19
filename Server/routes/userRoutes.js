@@ -6,9 +6,9 @@ const {
   addNewUser,
   registerUser,
   loginController,
-  resetPassword, findUsers,
+  resetPassword, findUsers, getListFriends,
   updatePassword, getUserProfile , updateUserProfile, verifyOtp, sendOtp, resetPasswordForgot
-} = require("../controllers/UserController");
+} = require("../controllers/userController");
 const { protect } = require("../middleware/authMiddleware");
 const router = express.Router();
 
@@ -30,4 +30,5 @@ router.post("/send-otp", sendOtp);
 router.post("/verify-otp", verifyOtp);
 router.post("/reset-password-forgot", resetPasswordForgot);
 router.route("/").get(protect, findUsers);
+router.get("/listFriends", protect, getListFriends);
 module.exports = router;

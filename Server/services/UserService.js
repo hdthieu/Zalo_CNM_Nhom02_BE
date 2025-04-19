@@ -141,6 +141,24 @@ exports.sendOtpToEmail = async (email) => {
   return { email: user.email, otp };
 };
 
+// danh sách bạn bè
+exports.listFriends = async (userId) => {
+  const user = await User.findById(userId).populate("friends");
+  if (!user)
+    return { message: "Người dùng không tồn tại" };
+  if (user.friends.length === 0)
+    return { message: "Người dùng không có bạn bè" };
+  return user.friends.map(friend => ({
+    _id: friend._id,
+    fullName: friend.fullName,
+    avatar: friend.avatar,
+    phoneNumber: friend.phoneNumber,
+    status: friend.status,
+    gender: friend.gender,
+    dateOfBirth: friend.dateOfBirth,
+  }));
+};
+
 
 
 exports.checkUserExists = async (fullName) => {
