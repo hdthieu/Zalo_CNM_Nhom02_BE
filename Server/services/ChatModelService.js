@@ -54,11 +54,7 @@ exports.createGroupChatService = async (users, name, creatorId) => {
 };
 
 exports.renameGroupService = async (chatId, chatName, userId) => {
-  const chat = await Chat.findByIdAndUpdate(
-    chatId,
-    { chatName },
-    { new: true }
-  )
+  const chat = await Chat.findByIdAndUpdate(chatId, { chatName }, { new: true })
     .populate("users", "-password")
     .populate("groupAdmin", "-password");
 
@@ -112,4 +108,30 @@ exports.accessChatSend = async (currentUserId, targetUserId) => {
   return await Chat.findById(newChat._id).populate("users", "-password");
 };
 
+exports.dissolutionGroup = async (chatId, userId) => {
+  const chat = await Chat.findById(chatId);
+  if (!chat) throw new Error("Chat not found");
 
+  if (chat.groupAdmin.toString() !== userId.toString())
+    throw new Error("You are not the admin of this group");
+
+  await chat.deleteOne();
+  return "Group chat deleted successfully";
+};
+exports.transferGroupAdmin = async (chatId, newAdminId, adminId) => {
+  const chat = await Chat.findById(chatId);
+  if (!chat) throw new Error("Chat not found");
+
+  if (chat.groupAdmin.toString() !== adminId.toString())
+    throw new Error("You are not the admin of this group");
+
+  const isMember = chat.users.some(
+    (userId) => userId.toString() === newAdminId
+  );
+
+  if (!isMember) throw new Error("New admin must be a member of the group");
+
+  chat.groupAdmin = newAdminId;
+  await chat.save();
+  return "Group admin transferred successfully";
+};

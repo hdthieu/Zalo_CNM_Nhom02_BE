@@ -24,13 +24,21 @@ exports.createGroupChat = asyncHandler(async (req, res) => {
       .json({ message: "At least 2 users are required to form a group chat" });
   }
 
-  const groupChat = await chatService.createGroupChatService(users, name, req.user._id);
+  const groupChat = await chatService.createGroupChatService(
+    users,
+    name,
+    req.user._id
+  );
   res.status(200).json(groupChat);
 });
 
 exports.renameGroup = asyncHandler(async (req, res) => {
   const { chatId, chatName } = req.body;
-  const chat = await chatService.renameGroupService(chatId, chatName, req.user._id);
+  const chat = await chatService.renameGroupService(
+    chatId,
+    chatName,
+    req.user._id
+  );
   res.status(200).json(chat);
 });
 
@@ -46,5 +54,30 @@ exports.addToGroup = asyncHandler(async (req, res) => {
   res.status(200).json(updatedChat);
 });
 
+exports.dissGroupController = asyncHandler(async (req, res) => {
+  const adminId = req.user._id;
+  const { chatId } = req.params;
+  try {
+    const message = await chatService.dissolutionGroup(chatId, adminId);
+    res.status(200).json({ message });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
 
+exports.transferAdController = asyncHandler(async (req, res) => {
+  const adminId = req.user._id;
+  const { chatId } = req.params;
+  const { newAdminId } = req.body;
 
+  try {
+    const message = await chatService.transferGroupAdmin(
+      chatId,
+      newAdminId,
+      adminId
+    );
+    res.status(200).json({ message });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
