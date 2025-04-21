@@ -140,7 +140,11 @@ exports.transferGroupAdmin = async (chatId, newAdminId, adminId) => {
 
   chat.groupAdmin = newAdminId;
   await chat.save();
-  return chat; 
+  const updatedChat = await Chat.findById(chatId)
+    .populate("users", "-password")
+    .populate("groupAdmin", "-password");
+
+  return updatedChat;
 };
 
 exports.getGroupUsersService = async (chatId) => {
@@ -155,3 +159,4 @@ exports.getGroupUsersService = async (chatId) => {
 
   return chat.users;
 };
+

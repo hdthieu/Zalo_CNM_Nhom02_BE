@@ -6,7 +6,7 @@ const {
   createGroupChat,
   renameGroup,
   removeFromGroup, getGroupUsersController,
-  addToGroup, dissGroupController, transferAdController
+  addToGroup, dissGroupController, transferAdController, getAvailableUsersForGroup
 } = require("../controllers/ChatModelController");
 
 const router = express.Router();

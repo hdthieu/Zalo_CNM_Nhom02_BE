@@ -1,6 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const chatService = require("../services/ChatModelService");
-
+const Chat = require("../Models/ChatModel");
 exports.accessChat = asyncHandler(async (req, res) => {
   const chat = await chatService.accessChatSend(req.user._id, req.body.userId);
   res.status(chat._id ? 200 : 201).json(chat);
@@ -64,17 +64,22 @@ exports.renameGroup = asyncHandler(async (req, res) => {
 exports.removeFromGroup = asyncHandler(async (req, res) => {
   const io = req.app.get("io");
   const { chatId, userId } = req.body;
-
+  const chat = await Chat.findById(chatId);
+  if (!chat) {
+    return res.status(404).json({ message: "Không tìm thấy nhóm." });
+  }
+  if (chat.groupAdmin.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ message: "Bạn không có quyền xoá thành viên." });
+  }
   const updatedChat = await chatService.removeFromGroupService(chatId, userId);
-
   io.to(userId.toString()).emit("group:removed", chatId);
-
   updatedChat.users.forEach((user) => {
     io.to(user._id.toString()).emit("group:updated", updatedChat);
   });
 
   res.status(200).json(updatedChat);
 });
+
 
 exports.addToGroup = asyncHandler(async (req, res) => {
   const io = req.app.get("io");
@@ -83,13 +88,9 @@ exports.addToGroup = asyncHandler(async (req, res) => {
   const updatedChat = await chatService.addToGroupService(chatId, userId);
 
   const addedUsers = Array.isArray(userId) ? userId : [userId];
-
-  // Gửi tới user mới
   addedUsers.forEach((uid) => {
     io.to(uid.toString()).emit("group:new", updatedChat);
   });
-
-  // Gửi tới user cũ
   updatedChat.users.forEach((user) => {
     io.to(user._id.toString()).emit("group:updated", updatedChat);
   });
@@ -101,13 +102,9 @@ exports.dissGroupController = asyncHandler(async (req, res) => {
   const io = req.app.get("io");
   const adminId = req.user._id;
   const { chatId } = req.params;
-
   try {
     const message = await chatService.dissolutionGroup(chatId, adminId);
-
-    // Gửi cho tất cả trong nhóm (tùy, nhưng nếu cần bạn có thể lấy lại danh sách trước khi xóa)
     io.emit("group:deleted", { chatId });
-
     res.status(200).json({ message });
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -156,6 +153,7 @@ exports.transferAdController = asyncHandler(async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
+
 
 // Lấy danh sách thành viên trong nhóm
 exports.getGroupUsersController = asyncHandler(async (req, res) => {
