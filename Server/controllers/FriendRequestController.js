@@ -12,11 +12,13 @@ exports.sendFriendRequest = async (req, res) => {
 
 exports.acceptFriendRequest = async (req, res) => {
   const { senderId, receiverId } = req.body;
+  const io = req.app.get("io");
+
   const result = await friendRequestService.acceptFriendRequest(
     senderId,
-    receiverId
+    receiverId,
+    io 
   );
+
   res.status(result.status).json({ message: result.message });
 };
-
-

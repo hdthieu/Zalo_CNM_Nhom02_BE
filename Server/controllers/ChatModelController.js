@@ -12,7 +12,9 @@ exports.fetchChats = asyncHandler(async (req, res) => {
 });
 
 exports.createGroupChat = asyncHandler(async (req, res) => {
+  const io = req.app.get("io");
   const { users: usersRaw, name } = req.body;
+
   if (!usersRaw || !name) {
     return res.status(400).json({ message: "Please fill all the fields" });
   }
@@ -29,36 +31,83 @@ exports.createGroupChat = asyncHandler(async (req, res) => {
     name,
     req.user._id
   );
+
+  // Emit cho tất cả thành viên
+  [...users, req.user._id].forEach((userId) => {
+    io.to(userId.toString()).emit("group:new", groupChat);
+  });
+
   res.status(200).json(groupChat);
 });
 
+// Khi đổi tên nhóm thành công
 exports.renameGroup = asyncHandler(async (req, res) => {
+  const io = req.app.get("io");
   const { chatId, chatName } = req.body;
+
+  // Đổi tên nhóm
   const chat = await chatService.renameGroupService(
     chatId,
     chatName,
     req.user._id
   );
+
+  // Phát sự kiện 'group:updated' cho tất cả các thành viên trong nhóm
+  chat.users.forEach((user) => {
+    console.log("user._id", user._id);
+    io.to(user._id.toString()).emit("group:updated", chat);
+  });
+
   res.status(200).json(chat);
 });
 
 exports.removeFromGroup = asyncHandler(async (req, res) => {
+  const io = req.app.get("io");
   const { chatId, userId } = req.body;
+
   const updatedChat = await chatService.removeFromGroupService(chatId, userId);
+
+  io.to(userId.toString()).emit("group:removed", chatId);
+
+  updatedChat.users.forEach((user) => {
+    io.to(user._id.toString()).emit("group:updated", updatedChat);
+  });
+
   res.status(200).json(updatedChat);
 });
 
 exports.addToGroup = asyncHandler(async (req, res) => {
+  const io = req.app.get("io");
   const { chatId, userId } = req.body;
+
   const updatedChat = await chatService.addToGroupService(chatId, userId);
+
+  const addedUsers = Array.isArray(userId) ? userId : [userId];
+
+  // Gửi tới user mới
+  addedUsers.forEach((uid) => {
+    io.to(uid.toString()).emit("group:new", updatedChat);
+  });
+
+  // Gửi tới user cũ
+  updatedChat.users.forEach((user) => {
+    io.to(user._id.toString()).emit("group:updated", updatedChat);
+  });
+
   res.status(200).json(updatedChat);
 });
 
 exports.dissGroupController = asyncHandler(async (req, res) => {
+  const io = req.app.get("io");
   const adminId = req.user._id;
   const { chatId } = req.params;
+
   try {
     const message = await chatService.dissolutionGroup(chatId, adminId);
+
+    // Gửi cho tất cả trong nhóm (tùy, nhưng nếu cần bạn có thể lấy lại danh sách trước khi xóa)
+    io.emit("group:deleted", { chatId });
+
     res.status(200).json({ message });
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -66,17 +115,54 @@ exports.dissGroupController = asyncHandler(async (req, res) => {
 });
 
 exports.transferAdController = asyncHandler(async (req, res) => {
+  const io = req.app.get("io");
   const adminId = req.user._id;
   const { chatId } = req.params;
   const { newAdminId } = req.body;
 
+  if (!chatId || !newAdminId) {
+    return res
+      .status(400)
+      .json({ message: "Missing required parameters: chatId or newAdminId" });
+  }
+
+  console.log("Received Chat ID:", chatId);
+  console.log("Received New Admin ID:", newAdminId);
+
   try {
-    const message = await chatService.transferGroupAdmin(
+    const updatedChat = await chatService.transferGroupAdmin(
       chatId,
       newAdminId,
       adminId
     );
-    res.status(200).json({ message });
+
+    // Đảm bảo updatedChat có thuộc tính 'users'
+    if (!updatedChat.users) {
+      return res
+        .status(400)
+        .json({ message: "No users found in updated chat" });
+    }
+
+    updatedChat.users.forEach((user) => {
+      io.to(user._id.toString()).emit("admin:transferred", {
+        chatId: updatedChat._id,
+        newAdminId,
+      });
+    });
+
+    res.status(200).json(updatedChat);
+  } catch (error) {
+    console.error("Error transferring admin:", error.message);
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Lấy danh sách thành viên trong nhóm
+exports.getGroupUsersController = asyncHandler(async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const users = await chatService.getGroupUsersService(chatId);
+    res.status(200).json(users);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

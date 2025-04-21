@@ -5,7 +5,7 @@ const {
   fetchChats,
   createGroupChat,
   renameGroup,
-  removeFromGroup,
+  removeFromGroup, getGroupUsersController,
   addToGroup, dissGroupController, transferAdController
 } = require("../controllers/ChatModelController");
 
@@ -19,4 +19,6 @@ router.route("/groupremove").put(protect, removeFromGroup);
 router.route("/groupadd").put(protect, addToGroup);
 router.route("/dissGroup/:chatId").delete(protect, dissGroupController);
 router.route("/transferAdmin/:chatId").put(protect, transferAdController);
+router.route("/users/:chatId").get(protect, getGroupUsersController);
+
 module.exports = router;

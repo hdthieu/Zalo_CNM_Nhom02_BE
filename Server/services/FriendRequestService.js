@@ -30,29 +30,66 @@ exports.sendFriendRequest = async (senderId, receiverId) => {
     return { error: error.message, status: 500 };
   }
 };
-
-exports.acceptFriendRequest = async (senderId, receiverId) => {
+exports.acceptFriendRequest = async (senderId, receiverId, io) => {
   try {
+    const sender = await User.findById(senderId);
+    const receiver = await User.findById(receiverId);
+
+    if (!sender || !receiver) {
+      return { error: "User not found", status: 404 };
+    }
+
     const request = await friendRequest.findOne({
       sender: senderId,
       receiver: receiverId,
     });
+
     if (!request) {
       return { error: "Friend request not found", status: 404 };
     }
-
-    await userService.findByIdAndUpdate(senderId, {
+    await User.findByIdAndUpdate(senderId, {
       $push: { friends: receiverId },
     });
-    await userService.findByIdAndUpdate(receiverId, {
+
+    await User.findByIdAndUpdate(receiverId, {
       $push: { friends: senderId },
     });
-
     await friendRequest.deleteOne({ _id: request._id });
+    if (io) {
+      io.to(receiverId).emit("friendRequestAccepted", { sender });
+    }
+
     return { message: "Friend request accepted", status: 200 };
   } catch (error) {
     return { error: error.message, status: 500 };
   }
 };
+
+
+
+
+// exports.acceptFriendRequest = async (senderId, receiverId) => {
+//   try {
+//     const request = await friendRequest.findOne({
+//       sender: senderId,
+//       receiver: receiverId,
+//     });
+//     if (!request) {
+//       return { error: "Friend request not found", status: 404 };
+//     }
+
+//     await userService.findByIdAndUpdate(senderId, {
+//       $push: { friends: receiverId },
+//     });
+//     await userService.findByIdAndUpdate(receiverId, {
+//       $push: { friends: senderId },
+//     });
+
+//     await friendRequest.deleteOne({ _id: request._id });
+//     return { message: "Friend request accepted", status: 200 };
+//   } catch (error) {
+//     return { error: error.message, status: 500 };
+//   }
+// };
 
 

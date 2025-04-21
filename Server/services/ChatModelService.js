@@ -54,13 +54,18 @@ exports.createGroupChatService = async (users, name, creatorId) => {
 };
 
 exports.renameGroupService = async (chatId, chatName, userId) => {
-  const chat = await Chat.findByIdAndUpdate(chatId, { chatName }, { new: true })
+  const chat = await Chat.findById(chatId)
     .populate("users", "-password")
     .populate("groupAdmin", "-password");
 
   if (!chat) throw new Error("Chat not found");
   if (chat.groupAdmin._id.toString() !== userId.toString())
     throw new Error("You are not the admin of this group");
+
+  chat.chatName = chatName;
+  await chat.save();
+  await chat.populate("users", "-password");
+  await chat.populate("groupAdmin", "-password");
 
   return chat;
 };
@@ -79,9 +84,11 @@ exports.removeFromGroupService = async (chatId, userId) => {
 };
 
 exports.addToGroupService = async (chatId, userId) => {
+  const userIds = Array.isArray(userId) ? userId : [userId];
+
   const added = await Chat.findByIdAndUpdate(
     chatId,
-    { $addToSet: { users: userId } },
+    { $addToSet: { users: { $each: userIds } } },
     { new: true }
   )
     .populate("users", "-password")
@@ -126,12 +133,25 @@ exports.transferGroupAdmin = async (chatId, newAdminId, adminId) => {
     throw new Error("You are not the admin of this group");
 
   const isMember = chat.users.some(
-    (userId) => userId.toString() === newAdminId
+    (userId) => userId.toString() === newAdminId.toString()
   );
 
   if (!isMember) throw new Error("New admin must be a member of the group");
 
   chat.groupAdmin = newAdminId;
   await chat.save();
-  return "Group admin transferred successfully";
+  return chat; 
+};
+
+exports.getGroupUsersService = async (chatId) => {
+  const chat = await Chat.findById(chatId).populate({
+    path: "users",
+    select: "fullName avatar",
+  });
+
+  if (!chat || !chat.isGroupChat) {
+    throw new Error("Group chat not found");
+  }
+
+  return chat.users;
 };
