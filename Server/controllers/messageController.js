@@ -1,9 +1,11 @@
 const asyncHandler = require("express-async-handler");
 const messageService = require("../services/MessageService");
-const { sendMessage: sendMessageService } = require('../services/MessageService');
+const {
+  sendMessage: sendMessageService,
+} = require("../services/MessageService");
 const Message = require("../Models/Message");
 const Chat = require("../Models/ChatModel");
-const { Upload } = require('@aws-sdk/lib-storage');
+const { Upload } = require("@aws-sdk/lib-storage");
 const { s3Client } = require("../config/s3");
 // exports.uploadFileMessage = async (req, res) => {
 //   try {
@@ -64,10 +66,18 @@ exports.sendMessage = asyncHandler(async (req, res) => {
   let messageType = "text"; // Mặc định là "text"
   if (file) {
     const fileType = file.mimetype;
-    if (fileType.startsWith("image/")) {
-      messageType = "image"; // Nếu là ảnh, gán kiểu là "image"
-    } else {
-      messageType = "file"; // Nếu là file khác, gán kiểu là "file"
+    if (file) {
+      const fileType = file.mimetype;
+
+      if (fileType.startsWith("image/")) {
+        messageType = "image";
+      } else if (fileType.startsWith("video/")) {
+        messageType = "video";
+      } else if (fileType.startsWith("audio/")) {
+        messageType = "audio";
+      } else {
+        messageType = "file";
+      }
     }
   }
 
@@ -89,7 +99,6 @@ exports.sendMessage = asyncHandler(async (req, res) => {
 
   res.status(201).json(newMsg);
 });
-
 
 // exports.getMessages = asyncHandler(async (req, res) => {
 //   const { chatId } = req.params;
@@ -134,7 +143,6 @@ exports.recallMessage = asyncHandler(async (req, res) => {
   return res.json({ message: result.message, data: result.data });
 });
 
-
 // Xóa tin nhắn ở phía tôi (người gửi) (không xóa ở phía người nhận) (chỉ trong ngày)
 exports.deleteMessageForMe = asyncHandler(async (req, res) => {
   const { messageId } = req.params;
@@ -147,7 +155,10 @@ exports.deleteMessageForMe = asyncHandler(async (req, res) => {
     return res.status(result.statusCode || 400).json({ message: result.error });
   }
 
-  res.json({ message: "Đã xóa tin nhắn khỏi tài khoản bạn", data: result.message });
+  res.json({
+    message: "Đã xóa tin nhắn khỏi tài khoản bạn",
+    data: result.message,
+  });
 });
 
 exports.editMessage = asyncHandler(async (req, res) => {
@@ -165,8 +176,6 @@ exports.editMessage = asyncHandler(async (req, res) => {
   }
   res.json(result.message);
 });
-
-
 
 // exports.markSeen = asyncHandler(async (req, res) => {
 //   const { messageId } = req.params;
@@ -188,4 +197,3 @@ exports.editMessage = asyncHandler(async (req, res) => {
 
 //   res.status(201).json(newMsg);
 // });
-

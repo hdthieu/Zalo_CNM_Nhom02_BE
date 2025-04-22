@@ -11,6 +11,22 @@ const s3Client = new S3Client({
   },
 });
 
+// const upload = multer({
+//   storage: multerS3({
+//     s3: s3Client,
+//     bucket: process.env.AWS_BUCKET_NAME,
+//     metadata: (req, file, cb) => {
+//       cb(null, { fieldName: file.fieldname });
+//     },
+//     key: (req, file, cb) => {
+//       cb(null, `${Date.now()}-${file.originalname}`);
+//     },
+//   }),
+//   limits: {
+//     fileSize: 5 * 1024 * 1024, // 5MB
+//   },
+// });
+
 const upload = multer({
   storage: multerS3({
     s3: s3Client,
@@ -19,16 +35,44 @@ const upload = multer({
       cb(null, { fieldName: file.fieldname });
     },
     key: (req, file, cb) => {
-      cb(null, `${Date.now()}-${file.originalname}`);
+      const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      cb(null, `${Date.now()}-${sanitizedName}`);
     },
   }),
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
+    fileSize: 50 * 1024 * 1024, // 50MB
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = [
+      "image/jpeg",
+      "image/png",
+      "application/pdf",
+      "video/mp4",
+      "video/quicktime",
+      "application/msword", // .doc
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+      "application/vnd.ms-excel", // .xls
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
+      "application/vnd.ms-powerpoint", // .ppt
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation", // .pptx
+      "audio/mpeg",
+    ];
+
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(
+        new Error(
+          "Chỉ hỗ trợ các định dạng JPG, PNG, PDF, MP4, DOC, DOCX, XLS, XLSX, PPT, PPTX"
+        ),
+        false
+      );
+    }
   },
 });
 
 module.exports = {
   s3Client,
   Upload,
-  upload, 
+  upload,
 };

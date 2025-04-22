@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const messageSchema = mongoose.Schema({
   sender: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   content: { type: String, trim: true },
-  type: { type: String, enum: ["text", "emoji", "image", "video", "file"], default: "text" },
+  type: { type: String, enum: ["text", "emoji", "image", "video", "file", "audio"], default: "text" },
   fileUrl: { type: String },
   chat: { type: mongoose.Schema.Types.ObjectId, ref: "chatmodels" },
   status: { type: String, enum: ["sent", "seen", "revoked"], default: "sent" },

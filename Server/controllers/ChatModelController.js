@@ -68,9 +68,9 @@ exports.removeFromGroup = asyncHandler(async (req, res) => {
   if (!chat) {
     return res.status(404).json({ message: "Không tìm thấy nhóm." });
   }
-  if (chat.groupAdmin.toString() !== req.user._id.toString()) {
-    return res.status(403).json({ message: "Bạn không có quyền xoá thành viên." });
-  }
+  // if (chat.groupAdmin.toString() !== req.user._id.toString()) {
+  //   return res.status(403).json({ message: "Bạn không có quyền xoá thành viên." });
+  // }
   const updatedChat = await chatService.removeFromGroupService(chatId, userId);
   io.to(userId.toString()).emit("group:removed", chatId);
   updatedChat.users.forEach((user) => {
