@@ -45,9 +45,23 @@ exports.verifyRegisterOtp = asyncHandler(async (req, res) => {
 
 exports.loginController = asyncHandler(async (req, res) => {
   try {
-    const { email, otp } = await userService.authUser(req.body);
-    console.log("Email:", email);
-    console.log("OTP:", otp);
+    const user = await userService.authUser(req.body);
+    res.json({
+      success: true,
+      message: "Đăng nhập thành công",
+      user,
+    });
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+exports.sendLoginOtp = asyncHandler(async (req, res) => {
+  try {
+    const { email, otp } = await userService.requestOtpLogin(req.body.email);
 
     const message = `Mã OTP đăng nhập của bạn là: ${otp}. Có hiệu lực trong 5 phút.`;
     await sendEmail({
@@ -62,7 +76,7 @@ exports.loginController = asyncHandler(async (req, res) => {
       email,
     });
   } catch (error) {
-    res.status(401).json({
+    res.status(400).json({
       success: false,
       error: error.message,
     });
@@ -72,11 +86,11 @@ exports.loginController = asyncHandler(async (req, res) => {
 exports.verifyLoginOtp = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
   try {
-    const result = await userService.verifyLoginOtp(email, otp);
+    const user = await userService.verifyLoginOtp(email, otp);
     res.json({
       success: true,
       message: "Xác minh OTP thành công. Đăng nhập thành công.",
-      user: result,
+      user,
     });
   } catch (error) {
     res.status(400).json({
@@ -85,6 +99,7 @@ exports.verifyLoginOtp = asyncHandler(async (req, res) => {
     });
   }
 });
+
 
 exports.addNewUser = async (req, res) => {
   try {

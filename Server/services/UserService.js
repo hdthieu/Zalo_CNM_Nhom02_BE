@@ -117,47 +117,54 @@ exports.verifyRegisterOtp = async (email, otp) => {
 
 
 // dang nhap user
+// Đăng nhập với email + mật khẩu
 exports.authUser = async ({ email, password }) => {
-  if (!email) {
-    throw new Error("Vui lòng nhập email");
-  }
-  if (!password) {
-    throw new Error("Vui lòng nhập mật khẩu");
-  }
+  if (!email) throw new Error("Vui lòng nhập email");
+  if (!password) throw new Error("Vui lòng nhập mật khẩu");
+  if (password.length < 8) throw new Error("Mật khẩu phải có ít nhất 8 ký tự");
 
-  if (password.length < 8) {
-    throw new Error("Mật khẩu phải có ít nhất 8 ký tự");
-  }
   const user = await User.findOne({ email });
-  if (!user) {
-    throw new Error("Email không tồn tại");
-  }
-  const isMatch = await user.matchPassword(password);
-  if (!isMatch) {
-    throw new Error("Sai mật khẩu");
-  }
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  if (!user) throw new Error("Email không tồn tại");
 
+  const isMatch = await user.matchPassword(password);
+  if (!isMatch) throw new Error("Sai mật khẩu");
+
+  return {
+    _id: user._id,
+    fullName: user.fullName,
+    email: user.email,
+    avatar: user.avatar,
+    token: generateToken(user._id),
+  };
+};
+
+// Gửi OTP đăng nhập
+exports.requestOtpLogin = async (email) => {
+  if (!email) throw new Error("Vui lòng nhập email");
+
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("Email không tồn tại");
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
   user.otpCode = otp;
-  user.otpExpire = Date.now() + 5 * 60 * 1000;
+  user.otpExpire = Date.now() + 5 * 60 * 1000; // 5 phút
   await user.save();
 
   return { email: user.email, otp };
 };
 
-
-
-// xac minh OTP dang nhap
+// Xác minh OTP
 exports.verifyLoginOtp = async (email, otp) => {
+  if (!email) throw new Error("Vui lòng nhập email");
+  if (!otp) throw new Error("Vui lòng nhập mã OTP");
+
   const user = await User.findOne({
     email,
     otpCode: otp,
     otpExpire: { $gt: Date.now() },
   });
 
-  if (!user) {
-    throw new Error("OTP không hợp lệ hoặc đã hết hạn");
-  }
+  if (!user) throw new Error("OTP không hợp lệ hoặc đã hết hạn");
 
   user.otpCode = undefined;
   user.otpExpire = undefined;
@@ -171,6 +178,8 @@ exports.verifyLoginOtp = async (email, otp) => {
     token: generateToken(user._id),
   };
 };
+
+
 
 exports.getUserProfile = async (userId) => {
   const user = await User.findById(userId).select("-password");

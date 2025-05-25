@@ -5,7 +5,7 @@ const {
   getAllUsers,
   addNewUser,
   registerUser,
-  loginController,
+  loginController, sendLoginOtp,
   resetPassword, findUsers, getListFriends, verifyLoginOtp, verifyRegisterOtp,
   updatePassword, getUserProfile , updateUserProfile, verifyOtp, sendOtp, resetPasswordForgot
 } = require("../controllers/userController");
@@ -17,6 +17,7 @@ router.post("/signup", registerUser);
 router.post("/verify-register-otp", verifyRegisterOtp);
 
 router.post("/signin", loginController);
+router.post("/signin-otp", sendLoginOtp);    
 router.post("/verify-login-otp", verifyLoginOtp);
 router.post("/addNewUser", addNewUser);
 router.get("/getAllUser", getAllUsers);
