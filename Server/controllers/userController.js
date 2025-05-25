@@ -5,19 +5,84 @@ const crypto = require("crypto");
 const User = require("../Models/User");
 exports.registerUser = asyncHandler(async (req, res) => {
   try {
-    const newUser = await userService.registerUser(req.body);
-    res.status(201).json(newUser);
+    const { email, otp } = await userService.registerUser(req.body);
+    const message = `Mã OTP của bạn là: ${otp}. Có hiệu lực trong 5 phút.`;
+    await sendEmail({
+      to: email,
+      subject: "OTP đăng ký tài khoản",
+      text: message,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Đã gửi OTP đến email của bạn",
+      email,
+    });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+exports.verifyRegisterOtp = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+  try {
+    const result = await userService.verifyRegisterOtp(email, otp);
+    res.json({
+      success: true,
+      message: "Xác minh OTP thành công. Tài khoản đã được kích hoạt.",
+      user: result,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
   }
 });
 
 exports.loginController = asyncHandler(async (req, res) => {
   try {
-    const user = await userService.authUser(req.body);
-    res.json(user);
+    const { email, otp } = await userService.authUser(req.body);
+    console.log("Email:", email);
+    console.log("OTP:", otp);
+
+    const message = `Mã OTP đăng nhập của bạn là: ${otp}. Có hiệu lực trong 5 phút.`;
+    await sendEmail({
+      to: email,
+      subject: "OTP đăng nhập",
+      text: message,
+    });
+
+    res.json({
+      success: true,
+      message: "Đã gửi OTP đăng nhập đến email của bạn",
+      email,
+    });
   } catch (error) {
-    res.status(401).json({ error: error.message });
+    res.status(401).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+exports.verifyLoginOtp = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+  try {
+    const result = await userService.verifyLoginOtp(email, otp);
+    res.json({
+      success: true,
+      message: "Xác minh OTP thành công. Đăng nhập thành công.",
+      user: result,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
   }
 });
 
@@ -107,8 +172,6 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   res.json({ message: "Mật khẩu đã được cập nhật" });
 });
 
-
-
 exports.updatePassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
 
@@ -123,7 +186,11 @@ exports.getUserProfile = asyncHandler(async (req, res) => {
 });
 
 exports.updateUserProfile = asyncHandler(async (req, res) => {
-  const updated = await userService.updateUserProfile(req.user.id, req.body);
+  const avatarUrl = req.file ? req.file.location : undefined;
+  const updated = await userService.updateUserProfile(req.user.id, {
+    ...req.body,
+    ...(avatarUrl &&  { avatar: avatarUrl })
+  });
   res.json(updated);
 });
 

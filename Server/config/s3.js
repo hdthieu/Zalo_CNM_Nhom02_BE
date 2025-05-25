@@ -11,22 +11,6 @@ const s3Client = new S3Client({
   },
 });
 
-// const upload = multer({
-//   storage: multerS3({
-//     s3: s3Client,
-//     bucket: process.env.AWS_BUCKET_NAME,
-//     metadata: (req, file, cb) => {
-//       cb(null, { fieldName: file.fieldname });
-//     },
-//     key: (req, file, cb) => {
-//       cb(null, `${Date.now()}-${file.originalname}`);
-//     },
-//   }),
-//   limits: {
-//     fileSize: 5 * 1024 * 1024, // 5MB
-//   },
-// });
-
 const upload = multer({
   storage: multerS3({
     s3: s3Client,
@@ -49,12 +33,12 @@ const upload = multer({
       "application/pdf",
       "video/mp4",
       "video/quicktime",
-      "application/msword", // .doc
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
-      "application/vnd.ms-excel", // .xls
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
-      "application/vnd.ms-powerpoint", // .ppt
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation", // .pptx
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+      "application/vnd.ms-excel", 
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation", 
       "audio/mpeg",
     ];
 

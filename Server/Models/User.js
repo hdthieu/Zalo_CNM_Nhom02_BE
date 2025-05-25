@@ -18,7 +18,7 @@ const UserSchema = new mongoose.Schema(
     gender: {type: String, enum: ["male", "female"], default: "male", required: true},
     dateOfBirth: {type: Date, required: true},
     otpCode: String,
-    otpExpire: Date,
+    otpExpire: Date
   },
   { timestamps: true }
 );

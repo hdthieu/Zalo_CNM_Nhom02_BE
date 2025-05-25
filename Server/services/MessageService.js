@@ -1,49 +1,6 @@
 const Message = require("../Models/Message");
 const Chat = require("../Models/ChatModel");
 
-// exports.sendMessage = async ({ sender, content, type, chatId, fileUrl }) => {
-//   // Kiểm tra tính hợp lệ của nội dung (nó có thể là văn bản, emoji, hoặc cả hai)
-//   if (!content) {
-//     return res.status(404).json({ message: "Message cannot be blank" });
-//   }
-
-//   // Tạo tin nhắn mới
-//   const newMessage = await Message.create({
-//     sender,
-//     content,
-//     type,
-//     chat: chatId,
-//     fileUrl,
-//   });
-
-//   // Cập nhật tin nhắn mới nhất trong chat
-//   await Chat.findByIdAndUpdate(chatId, { latestMessage: newMessage._id });
-
-//   // Trả về tin nhắn mới với thông tin người gửi và chat
-//   return await Message.findById(newMessage._id)
-//     .populate("sender", "fullName email avatar")
-//     .populate("chat");
-// };
-// exports.sendMessage = async ({ sender, content, type = "text", chatId, fileUrl }) => {
-//   const newMsg = await Message.create({
-//     sender,
-//     content,
-//     type,
-//     chat: chatId,
-//     fileUrl,
-//     deletedFor: [],
-//     recalled: false,
-//   });
-
-//   await Chat.findByIdAndUpdate(chatId, { latestMessage: newMsg._id });
-
-//   return await Message.findById(newMsg._id)
-//     .populate("sender", "fullName email avatar")
-//     .populate({
-//       path: "chat",
-//       populate: { path: "users", select: "fullName email avatar" },
-//     });
-// };
 
 exports.sendMessage = async ({ sender, content, chatId, type, fileUrl, fileName, fileType }) => {
   // Tạo tin nhắn mới
@@ -51,10 +8,10 @@ exports.sendMessage = async ({ sender, content, chatId, type, fileUrl, fileName,
     sender,
     content,
     chat: chatId,
-    type, // Kiểu của tin nhắn (text hoặc file)
-    fileUrl, // Đường dẫn của file
-    fileName, // Tên file
-    fileType, // Kiểu file (ví dụ: image/png)
+    type,
+    fileUrl,
+    fileName,
+    fileType,
   });
 
   // Populate các thông tin liên quan đến chat và người gửi
@@ -69,11 +26,6 @@ exports.sendMessage = async ({ sender, content, chatId, type, fileUrl, fileName,
   return fullMessage;
 };
 
-// exports.getAllMessages = async (chatId) => {
-//   return await Message.find({ chat: chatId })
-//     .populate("sender", "fullName email avatar")
-//     .populate("chat");
-// };
 exports.getAllMessages = async (chatId, userId) => {
   return await Message.find({
     chat: chatId,
@@ -82,35 +34,6 @@ exports.getAllMessages = async (chatId, userId) => {
     .populate("sender", "fullName email avatar")
     .populate("chat");
 };
-
-// exports.recallMessage = async ({ messageId, userId }) => {
-//   const message = await Message.findById(messageId).populate("chat");
-
-//   if (!message) {
-//     return res.status(404).json({ message: "Message not found" });
-//   }
-
-//   if (message.sender.toString() !== userId.toString()) {
-//     return res.status(403).json({ message: "You are not authorized to recall this message" });
-//   }
-
-//   const createdAt = new Date(message.createdAt);
-//   const now = new Date();
-//   const sameDay =
-//     createdAt.getFullYear() === now.getFullYear() &&
-//     createdAt.getMonth() === now.getMonth() &&
-//     createdAt.getDate() === now.getDate();
-
-//   if (!sameDay) {
-//     return res.status(403).json({ message: "You can only recall messages sent today" });
-//   }
-
-//   message.isRecalled = true;
-//   message.recalledAt = new Date();
-//   await message.save();
-
-//   return message;
-// };
 
 exports.recallMessage = async ({ messageId, userId }) => {
   const message = await Message.findById(messageId).populate("chat");
