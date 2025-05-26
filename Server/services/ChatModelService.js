@@ -172,3 +172,22 @@ exports.getGroupUsersService = async (chatId) => {
   return chat.users;
 };
 
+// Hung sua 
+exports.updateGroupAvatarService = async (chatId, adminId, avatarUrl) => {
+  const chat = await Chat.findById(chatId);
+
+  if (!chat) throw new Error("Group chat not found");
+
+  if (chat.groupAdmin.toString() !== adminId.toString()) {
+    throw new Error("Only admin can change group avatar");
+  }
+
+  chat.groupAvatar = avatarUrl;
+  await chat.save();
+
+  const updatedChat = await Chat.findById(chatId)
+    .populate("users", "-password")
+    .populate("groupAdmin", "-password");
+
+  return updatedChat;
+};

@@ -1,6 +1,11 @@
 const asyncHandler = require("express-async-handler");
 const chatService = require("../services/ChatModelService");
 const Chat = require("../Models/ChatModel");
+//Hung sua 
+const { upload, s3Client } = require("../config/s3");
+const { GetObjectCommand } = require("@aws-sdk/client-s3");
+
+
 exports.accessChat = asyncHandler(async (req, res) => {
   const chat = await chatService.accessChatSend(req.user._id, req.body.userId);
   res.status(chat._id ? 200 : 201).json(chat);
@@ -165,3 +170,27 @@ exports.getGroupUsersController = asyncHandler(async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
+
+// Hung sua
+exports.updateGroupAvatarController = asyncHandler(async (req, res) => {
+  const io = req.app.get("io");
+  const { chatId } = req.body;
+console.log("🔍 File upload:", req.file);
+
+  if (!req.file || !req.file.location) {
+    return res.status(400).json({ message: "No file uploaded" });
+  }
+
+  const updatedChat = await chatService.updateGroupAvatarService(
+    chatId,
+    req.user._id,
+    req.file.location
+  );
+
+  updatedChat.users.forEach(user => {
+    io.to(user._id.toString()).emit("group:updated", updatedChat);
+  });
+
+  res.status(200).json(updatedChat);
+});
+
