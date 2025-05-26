@@ -31,7 +31,19 @@ exports.fetchChatsService = async (userId) => {
   })
     .populate("users", "-password")
     .populate("groupAdmin", "-password")
-    .populate("latestMessage")
+    // Hung sua
+    .populate({
+  path: "latestMessage",
+  populate: {
+    path: "sender",
+    select: "fullName email avatar"
+  }
+})
+
+
+
+
+
     .sort({ updatedAt: -1 });
 
   return await User.populate(chats, {

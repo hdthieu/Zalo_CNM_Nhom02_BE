@@ -75,52 +75,128 @@ io.on("connection", (socket) => {
     console.log(`User ${userId} joined personal room`);
   });
 
-  socket.on("sendFriendRequest", async ({ senderId, receiverId }) => {
-    try {
-      const sender = await User.findById(senderId);
-      const receiver = await User.findById(receiverId);
+  // socket.on("sendFriendRequest", async ({ senderId, receiverId }) => {
+  //   try {
+  //     const sender = await User.findById(senderId);
+  //     const receiver = await User.findById(receiverId);
 
-      if (!sender || !receiver) return;
+  //     if (!sender || !receiver) return;
 
-      const existing = await FriendRequest.findOne({
-        sender: senderId,
-        receiver: receiverId,
-      });
+  //     const existing = await FriendRequest.findOne({
+  //       sender: senderId,
+  //       receiver: receiverId,
+  //     });
 
-      if (existing) {
-        console.log("Đã có lời mời rồi");
-        return;
-      }
+  //     if (existing) {
+  //       console.log("Đã có lời mời rồi");
+  //       return;
+  //     }
 
+  //     await FriendRequest.create({ sender: senderId, receiver: receiverId });
+
+  //     io.to(receiverId).emit("friendRequestReceived", {
+  //       sender: {
+  //         _id: sender._id,
+  //         fullName: sender.fullName,
+  //         avatar: sender.avatar,
+  //       },
+  //     });
+
+  //     await Notification.create({
+  //       user: receiverId,
+  //       type: "friend_request",
+  //       message: `${sender.fullName} đã gửi lời mời kết bạn`,
+  //     });
+
+  //     console.log(`Friend request sent from ${senderId} to ${receiverId}`);
+  //   } catch (error) {
+  //     console.error("Error sending friend request:", error.message);
+  //   }
+  // });
+
+// Hung sua 
+socket.on("sendFriendRequest", async ({ senderId, receiverId }) => {
+  try {
+    const sender = await User.findById(senderId);
+    const receiver = await User.findById(receiverId);
+    if (!sender || !receiver) return;
+
+    const existing = await FriendRequest.findOne({
+      sender: senderId,
+      receiver: receiverId,
+    });
+
+    if (!existing) {
       await FriendRequest.create({ sender: senderId, receiver: receiverId });
-
-      io.to(receiverId).emit("friendRequestReceived", {
-        sender: {
-          _id: sender._id,
-          fullName: sender.fullName,
-          avatar: sender.avatar,
-        },
-      });
-
-      await Notification.create({
-        user: receiverId,
-        type: "friend_request",
-        message: `${sender.fullName} đã gửi lời mời kết bạn`,
-      });
-
-      console.log(`Friend request sent from ${senderId} to ${receiverId}`);
-    } catch (error) {
-      console.error("Error sending friend request:", error.message);
+      console.log("✅ Friend request saved:", senderId, "->", receiverId);
+    } else {
+      console.log("⚠️ Friend request already exists, re-sending socket event");
     }
-  });
+
+    // ✅ Luôn gửi socket event để người nhận thấy lời mời (kể cả nếu đã có trong DB)
+    io.to(receiverId).emit("friendRequestReceived", {
+      sender: {
+        _id: sender._id,
+        fullName: sender.fullName,
+        avatar: sender.avatar,
+      },
+    });
+
+    await Notification.create({
+      user: receiverId,
+      type: "friend_request",
+      message: `${sender.fullName} đã gửi lời mời kết bạn`,
+    });
+  } catch (error) {
+    console.error("❌ Error sending friend request:", error.message);
+  }
+});
+
+
+
+
+
+
 
   socket.on("createGroup", (newGroup) => {
     newGroup.users.forEach((userId) => {
       socket.to(userId).emit("newGroupCreated", newGroup);
     });
   });
+
+  // Hung sua 
+  // Test cuoc goi video call
+  // Signaling cho WebRTC
+  // ==============================
+  // 🔁 WebRTC Signaling
+  // ==============================
+
+  socket.on("call-user", ({ offer, to, from }) => {
+    io.to(to).emit("call-made", { offer, from });
+  });
+
+  socket.on("make-answer", ({ answer, to }) => {
+    io.to(to).emit("answer-made", { answer });
+  });
+
+  socket.on("ice-candidate", ({ to, candidate }) => {
+    io.to(to).emit("ice-candidate", { candidate });
+  });
+
+  socket.on("end-call", ({ to }) => {
+    io.to(to).emit("call-ended");
+  });
+
+  socket.on("disconnect", () => {
+    console.log("❌ User disconnected:", socket.id);
+  });
+
 });
 
 server.listen(process.env.PORT || 5000, () => {
   console.log("Server is running on port 5000");
 });
+
+
+
+
