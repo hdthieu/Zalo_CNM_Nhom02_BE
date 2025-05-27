@@ -6,10 +6,16 @@ const {
   createGroupChat,
   renameGroup,
   removeFromGroup, getGroupUsersController,
-  addToGroup, dissGroupController, transferAdController, getAvailableUsersForGroup, updateGroupAvatar
+  //Hung suasua
+  updateGroupAvatarController,
+  addToGroup, dissGroupController, transferAdController, getAvailableUsersForGroup
 } = require("../controllers/ChatModelController");
-const {upload} = require("../config/s3")
 const router = express.Router();
+// Hung sua 
+const { upload } = require("../config/s3");
+
+
+
 
 router.route("/").post(protect, accessChat);
 router.route("/").get(protect, fetchChats);
@@ -20,5 +26,12 @@ router.route("/groupadd").put(protect, addToGroup);
 router.route("/dissGroup/:chatId").delete(protect, dissGroupController);
 router.route("/transferAdmin/:chatId").put(protect, transferAdController);
 router.route("/users/:chatId").get(protect, getGroupUsersController);
-router.put("/updateGroupAvatar", protect, upload.single("avatar"), updateGroupAvatar);
+
+// Hung sua 
+router.route("/group/avatar").put(
+  protect,
+  upload.single("avatar"),
+  updateGroupAvatarController
+);
+
 module.exports = router;

@@ -2,7 +2,51 @@ const Message = require("../Models/Message");
 const Chat = require("../Models/ChatModel");
 
 
+// exports.sendMessage = async ({ sender, content, chatId, type, fileUrl, fileName, fileType }) => {
+//   // Tạo tin nhắn mới
+//   const newMessage = await Message.create({
+//     sender,
+//     content,
+//     chat: chatId,
+//     type,
+//     fileUrl,
+//     fileName,
+//     fileType,
+//   });
+
+//   // Populate các thông tin liên quan đến chat và người gửi
+//   const fullMessage = await newMessage.populate([
+//     {
+//       path: "chat",
+//       populate: { path: "users", select: "fullName email avatar _id" },
+//     },
+//     { path: "sender", select: "fullName email avatar _id" },
+//   ]);
+
+//   return fullMessage;
+// };
+// Hung sua 
 exports.sendMessage = async ({ sender, content, chatId, type, fileUrl, fileName, fileType }) => {
+  // Nếu không có content, thêm mặc định theo loại
+  if (!content) {
+    switch (type) {
+      case "image":
+        content = "[Ảnh]";
+        break;
+      case "video":
+        content = "[Video]";
+        break;
+      case "audio":
+        content = "[Âm thanh]";
+        break;
+      case "file":
+        content = "[Tệp]";
+        break;
+      default:
+        content = "";
+    }
+  }
+
   // Tạo tin nhắn mới
   const newMessage = await Message.create({
     sender,
@@ -14,7 +58,10 @@ exports.sendMessage = async ({ sender, content, chatId, type, fileUrl, fileName,
     fileType,
   });
 
-  // Populate các thông tin liên quan đến chat và người gửi
+  // Gán latestMessage cho Chat
+  await Chat.findByIdAndUpdate(chatId, { latestMessage: newMessage._id });
+
+  // Populate dữ liệu đầy đủ để trả về frontend
   const fullMessage = await newMessage.populate([
     {
       path: "chat",

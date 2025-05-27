@@ -4,6 +4,11 @@ const ChatModel = new mongoose.Schema(
   {
     chatName: { type: String, trim: true },
     isGroupChat: { type: Boolean, default: false },
+    //Hung sua
+    groupAvatar: {
+      type: String,
+      default: "", // hoặc URL mặc định nếu có
+    },
     users: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -26,7 +31,8 @@ const ChatModel = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
+
 );
 
 const Chat = mongoose.model("chatmodels", ChatModel);

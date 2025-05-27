@@ -31,9 +31,14 @@ exports.fetchChatsService = async (userId) => {
   })
     .populate("users", "-password")
     .populate("groupAdmin", "-password")
-    .populate("latestMessage")
-    .sort({ updatedAt: -1 });
-
+    // Hung sua
+    .populate({
+  path: "latestMessage",
+  populate: {
+    path: "sender",
+    select: "fullName email avatar"
+  }
+}).sort({ updatedAt: -1 });
   return await User.populate(chats, {
     path: "latestMessage.sender",
     select: "fullName email profilePic",
@@ -160,18 +165,22 @@ exports.getGroupUsersService = async (chatId) => {
   return chat.users;
 };
 
-exports.updateGroupAvatarService = async (chatId, avatarUrl, userId) => {
+// Hung sua 
+exports.updateGroupAvatarService = async (chatId, adminId, avatarUrl) => {
   const chat = await Chat.findById(chatId);
 
-  if (!chat) throw new Error("Nhóm không tồn tại");
-  // if (chat.groupAdmin.toString() !== userId.toString()) {
-  //   throw new Error("Bạn không phải admin nhóm");
-  // }
+  if (!chat) throw new Error("Group chat not found");
 
-  chat.avatar = avatarUrl;
+  if (chat.groupAdmin.toString() !== adminId.toString()) {
+    throw new Error("Only admin can change group avatar");
+  }
+
+  chat.groupAvatar = avatarUrl;
   await chat.save();
 
-  return await chat
+  const updatedChat = await Chat.findById(chatId)
     .populate("users", "-password")
     .populate("groupAdmin", "-password");
+
+  return updatedChat;
 };

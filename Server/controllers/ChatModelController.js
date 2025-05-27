@@ -1,6 +1,11 @@
 const asyncHandler = require("express-async-handler");
 const chatService = require("../services/ChatModelService");
 const Chat = require("../Models/ChatModel");
+//Hung sua 
+const { upload, s3Client } = require("../config/s3");
+const { GetObjectCommand } = require("@aws-sdk/client-s3");
+
+
 exports.accessChat = asyncHandler(async (req, res) => {
   const chat = await chatService.accessChatSend(req.user._id, req.body.userId);
   res.status(chat._id ? 200 : 201).json(chat);
@@ -155,21 +160,26 @@ exports.getGroupUsersController = asyncHandler(async (req, res) => {
   }
 });
 
-
-exports.updateGroupAvatar = asyncHandler(async (req, res) => {
+// Hung sua
+exports.updateGroupAvatarController = asyncHandler(async (req, res) => {
   const io = req.app.get("io");
   const { chatId } = req.body;
-  const avatarUrl = req.file ? req.file.location : undefined;
-  const userId = req.user._id;
+console.log("🔍 File upload:", req.file);
 
-  if (!avatarUrl) {
-    return res.status(400).json({ message: "Vui lòng chọn ảnh để cập nhật" });
+  if (!req.file || !req.file.location) {
+    return res.status(400).json({ message: "No file uploaded" });
   }
 
-  const updatedChat = await chatService.updateGroupAvatarService(chatId, avatarUrl, userId);
+  const updatedChat = await chatService.updateGroupAvatarService(
+    chatId,
+    req.user._id,
+    req.file.location
+  );
+
   updatedChat.users.forEach(user => {
-    io.to(user._id.toString()).emit("group:avatarUpdated", updatedChat);
+    io.to(user._id.toString()).emit("group:updated", updatedChat);
   });
 
   res.status(200).json(updatedChat);
 });
+
