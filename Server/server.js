@@ -180,9 +180,34 @@ socket.on("cancelFriendRequest", async ({ senderId, receiverId }) => {
     console.error("❌ Lỗi cancelFriendRequest:", err.message);
   }
 });
+//Hung sua 
+// 🔌 Socket - Xoá bạn bè
+socket.on("removeFriend", async ({ userId, friendId }) => {
+  try {
+    const user = await User.findById(userId);
+    const friend = await User.findById(friendId);
 
+    if (!user || !friend) {
+      console.error("Người dùng không tồn tại");
+      return;
+    }
 
+    // Gỡ bạn bè khỏi cả hai bên
+    user.friends = user.friends.filter((f) => f.toString() !== friendId);
+    friend.friends = friend.friends.filter((f) => f.toString() !== userId);
 
+    await user.save();
+    await friend.save();
+
+    // Gửi sự kiện tới cả hai user để cập nhật UI
+    io.to(userId).emit("friendRemoved", { friendId });
+    io.to(friendId).emit("friendRemoved", { friendId: userId });
+
+    console.log(`❌ Friendship removed between ${userId} and ${friendId}`);
+  } catch (error) {
+    console.error("❌ Error in removeFriend socket:", error.message);
+  }
+});
 
 
 
