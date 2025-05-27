@@ -91,5 +91,3 @@ exports.acceptFriendRequest = async (senderId, receiverId, io) => {
 //     return { error: error.message, status: 500 };
 //   }
 // };
-
-

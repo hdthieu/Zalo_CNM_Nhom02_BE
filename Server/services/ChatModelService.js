@@ -38,14 +38,7 @@ exports.fetchChatsService = async (userId) => {
     path: "sender",
     select: "fullName email avatar"
   }
-})
-
-
-
-
-
-    .sort({ updatedAt: -1 });
-
+}).sort({ updatedAt: -1 });
   return await User.populate(chats, {
     path: "latestMessage.sender",
     select: "fullName email profilePic",

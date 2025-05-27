@@ -202,9 +202,6 @@ exports.updateMessageContent = async ({ messageId, userId, newContent }) => {
   return { message: fullMessage };
 };
 
-
-
-
 exports.forwardMessage = async ({ messageId, toChatId, sender }) => {
   const original = await Message.findById(messageId);
   if (!original) throw new Error("Original message not found");
@@ -223,6 +220,3 @@ exports.forwardMessage = async ({ messageId, toChatId, sender }) => {
     .populate("sender", "fullName email avatar")
     .populate("chat");
 };
-
-
-

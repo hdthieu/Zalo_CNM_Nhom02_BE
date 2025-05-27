@@ -117,7 +117,7 @@ exports.verifyRegisterOtp = async (email, otp) => {
 
 
 // dang nhap user
-// Đăng nhập với email + mật khẩu
+// Đang nhap với email + mat khau
 exports.authUser = async ({ email, password }) => {
   if (!email) throw new Error("Vui lòng nhập email");
   if (!password) throw new Error("Vui lòng nhập mật khẩu");
@@ -138,7 +138,7 @@ exports.authUser = async ({ email, password }) => {
   };
 };
 
-// Gửi OTP đăng nhập
+// Gui OTP đang nhap
 exports.requestOtpLogin = async (email) => {
   if (!email) throw new Error("Vui lòng nhập email");
 
@@ -153,7 +153,7 @@ exports.requestOtpLogin = async (email) => {
   return { email: user.email, otp };
 };
 
-// Xác minh OTP
+// Xac minh OTP
 exports.verifyLoginOtp = async (email, otp) => {
   if (!email) throw new Error("Vui lòng nhập email");
   if (!otp) throw new Error("Vui lòng nhập mã OTP");

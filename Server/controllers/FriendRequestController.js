@@ -25,19 +25,17 @@ exports.acceptFriendRequest = async (req, res) => {
   res.status(result.status).json({ message: result.message });
 };
 
-
-
 //Hung sua 
 exports.getPendingRequests = async (req, res) => {
   try {
     const userId = req.user._id;
 
     const requests = await FriendRequest.find({ receiver: userId })
-      .populate("sender", "fullName avatar email"); // gửi thông tin người gửi
+      .populate("sender", "fullName avatar email");
 
-    res.json(requests.map((req) => req.sender)); // chỉ trả người gửi
+    res.json(requests.map((req) => req.sender)); 
   } catch (err) {
-    console.error("❌ Lỗi lấy lời mời:", err);
+    console.error("Lỗi lấy lời mời:", err);
     res.status(500).json({ error: "Server error khi lấy lời mời kết bạn" });
   }
 };

@@ -10,10 +10,9 @@ const {
   updateGroupAvatarController,
   addToGroup, dissGroupController, transferAdController, getAvailableUsersForGroup
 } = require("../controllers/ChatModelController");
-
 const router = express.Router();
 // Hung sua 
-const { upload } = require("../config/s3"); // dùng đúng upload cấu hình AWS
+const { upload } = require("../config/s3");
 
 
 

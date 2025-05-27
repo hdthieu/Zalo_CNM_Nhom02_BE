@@ -36,8 +36,6 @@ exports.createGroupChat = asyncHandler(async (req, res) => {
     name,
     req.user._id
   );
-
-  // Emit cho tất cả thành viên
   [...users, req.user._id].forEach((userId) => {
     io.to(userId.toString()).emit("group:new", groupChat);
   });
@@ -45,19 +43,15 @@ exports.createGroupChat = asyncHandler(async (req, res) => {
   res.status(200).json(groupChat);
 });
 
-// Khi đổi tên nhóm thành công
+// DOi ten nhom
 exports.renameGroup = asyncHandler(async (req, res) => {
   const io = req.app.get("io");
   const { chatId, chatName } = req.body;
-
-  // Đổi tên nhóm
   const chat = await chatService.renameGroupService(
     chatId,
     chatName,
     req.user._id
   );
-
-  // Phát sự kiện 'group:updated' cho tất cả các thành viên trong nhóm
   chat.users.forEach((user) => {
     console.log("user._id", user._id);
     io.to(user._id.toString()).emit("group:updated", chat);
@@ -73,9 +67,6 @@ exports.removeFromGroup = asyncHandler(async (req, res) => {
   if (!chat) {
     return res.status(404).json({ message: "Không tìm thấy nhóm." });
   }
-  // if (chat.groupAdmin.toString() !== req.user._id.toString()) {
-  //   return res.status(403).json({ message: "Bạn không có quyền xoá thành viên." });
-  // }
   const updatedChat = await chatService.removeFromGroupService(chatId, userId);
   io.to(userId.toString()).emit("group:removed", chatId);
   updatedChat.users.forEach((user) => {
@@ -137,8 +128,6 @@ exports.transferAdController = asyncHandler(async (req, res) => {
       newAdminId,
       adminId
     );
-
-    // Đảm bảo updatedChat có thuộc tính 'users'
     if (!updatedChat.users) {
       return res
         .status(400)
@@ -160,7 +149,7 @@ exports.transferAdController = asyncHandler(async (req, res) => {
 });
 
 
-// Lấy danh sách thành viên trong nhóm
+// Danh Sach Thanh vien trong nhom
 exports.getGroupUsersController = asyncHandler(async (req, res) => {
   try {
     const { chatId } = req.params;
