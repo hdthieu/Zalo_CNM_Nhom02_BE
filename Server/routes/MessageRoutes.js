@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { sendMessage, getMessages, recallMessage, deleteMessageForMe, editMessage, forwardMessage } = require("../controllers/MessageController");
+const { sendMessage, getMessages, recallMessage, deleteMessageForMe, editMessage,deleteMessageForReceiver, forwardMessage } = require("../controllers/MessageController");
 const { protect } = require("../middleware/authMiddleware");
 const { upload } = require("../config/s3"); // multer-s3 middleware
 
@@ -12,4 +12,6 @@ router.put("/delete-for-me/:messageId", protect, deleteMessageForMe);
 router.put("/edit/:messageId", protect, editMessage);
 router.post("/forward", protect, forwardMessage);
 
+//Hung sua 
+router.put("/delete-for-receiver/:messageId", protect, deleteMessageForReceiver);
 module.exports = router;

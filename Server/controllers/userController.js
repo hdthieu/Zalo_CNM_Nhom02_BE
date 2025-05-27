@@ -261,3 +261,25 @@ exports.getListFriends = asyncHandler(async (req, res) => {
   const friends = await userService.listFriends(userId);
   res.json(friends);
 });
+
+
+// Hung sua 
+// Xoa ban be
+exports.removeFriendController = asyncHandler(async (req, res) => {
+  const { friendId } = req.body;
+
+  console.log("🔍 friendId:", friendId);
+  console.log("🔐 current userId:", req.user?._id);
+
+  if (!friendId) {
+    return res.status(400).json({ error: "Thiếu friendId" });
+  }
+
+  try {
+    const result = await userService.removeFriend(req.user._id, friendId);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+

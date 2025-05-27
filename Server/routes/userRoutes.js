@@ -7,7 +7,8 @@ const {
   registerUser,
   loginController, sendLoginOtp,
   resetPassword, findUsers, getListFriends, verifyLoginOtp, verifyRegisterOtp,
-  updatePassword, getUserProfile , updateUserProfile, verifyOtp, sendOtp, resetPasswordForgot
+  updatePassword, getUserProfile , updateUserProfile, verifyOtp, sendOtp, resetPasswordForgot,
+  removeFriendController
 } = require("../controllers/userController");
 const { protect } = require("../middleware/authMiddleware");
 const router = express.Router();
@@ -35,5 +36,10 @@ router.post("/verify-otp", verifyOtp);
 router.post("/reset-password-forgot", resetPasswordForgot);
 router.route("/").get(protect, findUsers);
 router.get("/listFriends", protect, getListFriends);
+
+// Hung sua 
+router.put("/removeFriend", protect, removeFriendController);
+
+
 
 module.exports = router;

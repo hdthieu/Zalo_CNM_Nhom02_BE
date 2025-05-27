@@ -279,3 +279,38 @@ exports.findById = async (userId) => {
 exports.findByIdAndUpdate = async (userId, user) => {
   return await User.findByIdAndUpdate(userId, user, { new: true });
 };
+
+
+// Hung sua
+// Xoa ban be 
+exports.removeFriend = async (userId, friendId) => {
+  const user = await User.findById(userId);
+  const friend = await User.findById(friendId);
+
+  if (!user || !friend) throw new Error("Người dùng không tồn tại");
+
+  const userIdStr = userId.toString();
+  const friendIdStr = friendId.toString();
+
+  console.log("🔍 friendId:", friendIdStr);
+  console.log("🔐 current userId:", userIdStr);
+  console.log("🧾 Trước khi xoá:");
+  console.log("User:", user.friends.map((f) => f.toString()));
+  console.log("Friend:", friend.friends.map((f) => f.toString()));
+
+  // Ép kiểu string để pull hoạt động
+  user.friends = user.friends.filter((f) => f.toString() !== friendIdStr);
+  friend.friends = friend.friends.filter((f) => f.toString() !== userIdStr);
+
+  await user.save();
+  await friend.save();
+
+  console.log("✅ Sau khi xoá:");
+  console.log("User:", user.friends.map((f) => f.toString()));
+  console.log("Friend:", friend.friends.map((f) => f.toString()));
+
+  return { message: "Xóa bạn bè thành công" };
+};
+
+
+

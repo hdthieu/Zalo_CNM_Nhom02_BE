@@ -10,11 +10,13 @@ const s3Client = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
-
+  console.log("🧪 Loaded bucket:", process.env.AWS_BUCKET_NAME);
 const upload = multer({
   storage: multerS3({
     s3: s3Client,
     bucket: process.env.AWS_BUCKET_NAME,
+  
+
     metadata: (req, file, cb) => {
       cb(null, { fieldName: file.fieldname });
     },

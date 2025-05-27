@@ -229,3 +229,22 @@ exports.forwardMessage = asyncHandler(async (req, res) => {
 //   const messages = await messageService.getAllMessages(chatId);
 //   res.status(200).json(messages);
 // });
+// Xóa tin nhắn ở phía người nhận 
+exports.deleteMessageForReceiver = asyncHandler(async (req, res) => {
+  const { messageId } = req.params;
+  const userId = req.user._id;
+
+  const result = await messageService.deleteMessageForUser({
+    messageId,
+    userId,
+  });
+
+  if (result.error) {
+    return res.status(result.statusCode || 400).json({ message: result.error });
+  }
+
+  res.json({
+    message: "Tin nhắn đã được ẩn khỏi phía bạn (người nhận)",
+    data: result.message,
+  });
+});

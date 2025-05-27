@@ -151,6 +151,35 @@ socket.on("sendFriendRequest", async ({ senderId, receiverId }) => {
     console.error("❌ Error sending friend request:", error.message);
   }
 });
+//Hung sua 
+socket.on("rejectFriendRequest", async ({ senderId, receiverId }) => {
+  try {
+    await FriendRequest.findOneAndDelete({ sender: senderId, receiver: receiverId });
+
+    io.to(senderId).emit("friendRequestRejected", {
+      senderId,
+      receiverId, // để bên client biết xóa đúng ID
+    });
+
+    console.log(`📤 ${receiverId} từ chối lời mời từ ${senderId}`);
+  } catch (err) {
+    console.error("❌ Lỗi rejectFriendRequest:", err.message);
+  }
+});
+//Hung sua 
+// Gỡ lời mời 
+socket.on("cancelFriendRequest", async ({ senderId, receiverId }) => {
+  try {
+    await FriendRequest.findOneAndDelete({ sender: senderId, receiver: receiverId });
+
+    // Gửi thông báo cho người nhận để ẩn lời mời khỏi UI nếu đang mở
+    io.to(receiverId).emit("friendRequestCancelled", { senderId });
+
+    console.log(`🗑️ ${senderId} đã hủy lời mời kết bạn với ${receiverId}`);
+  } catch (err) {
+    console.error("❌ Lỗi cancelFriendRequest:", err.message);
+  }
+});
 
 
 
