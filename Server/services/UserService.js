@@ -279,3 +279,24 @@ exports.findById = async (userId) => {
 exports.findByIdAndUpdate = async (userId, user) => {
   return await User.findByIdAndUpdate(userId, user, { new: true });
 };
+
+
+// Hung sua
+// Xoa ban be 
+exports.removeFriend = async (userId, friendId) => {
+  const user = await User.findById(userId);
+  const friend = await User.findById(friendId);
+
+  if (!user || !friend) throw new Error("Người dùng không tồn tại");
+
+  // Xóa bạn 2 chiều
+  user.friends.pull(friendId);
+  friend.friends.pull(userId);
+
+  await user.save();
+  await friend.save();
+
+  return { message: "Xóa bạn bè thành công" };
+};
+
+
