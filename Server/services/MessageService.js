@@ -122,12 +122,9 @@ exports.updateMessageContent = async ({ messageId, userId, newContent }) => {
   return { message: fullMessage };
 };
 
-
-
-
 exports.forwardMessage = async ({ messageId, toChatId, sender }) => {
   const original = await Message.findById(messageId);
-  if (!original) throw new Error("Original message not found");
+  if (!original) throw new Error("Không tìm thấy tin nhắn gốc");
 
   const forwarded = await Message.create({
     sender,
@@ -135,11 +132,15 @@ exports.forwardMessage = async ({ messageId, toChatId, sender }) => {
     type: original.type,
     chat: toChatId,
     fileUrl: original.fileUrl,
+    fileName: original.fileName,
+    fileType: original.fileType,
   });
-
   await Chat.findByIdAndUpdate(toChatId, { latestMessage: forwarded._id });
 
   return await Message.findById(forwarded._id)
     .populate("sender", "fullName email avatar")
-    .populate("chat");
+    .populate({
+      path: "chat",
+      populate: { path: "users", select: "fullName email avatar _id" },
+    });
 };

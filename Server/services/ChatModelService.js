@@ -160,3 +160,18 @@ exports.getGroupUsersService = async (chatId) => {
   return chat.users;
 };
 
+exports.updateGroupAvatarService = async (chatId, avatarUrl, userId) => {
+  const chat = await Chat.findById(chatId);
+
+  if (!chat) throw new Error("Nhóm không tồn tại");
+  // if (chat.groupAdmin.toString() !== userId.toString()) {
+  //   throw new Error("Bạn không phải admin nhóm");
+  // }
+
+  chat.avatar = avatarUrl;
+  await chat.save();
+
+  return await chat
+    .populate("users", "-password")
+    .populate("groupAdmin", "-password");
+};
