@@ -110,22 +110,52 @@ exports.recallMessage = async ({ messageId, userId }) => {
   return { message: "Message recalled successfully", data: message };
 };
 // Xóa tin nhắn ở phía tôi (người gửi) (không xóa ở phía người nhận) (chỉ trong ngày)
+// exports.deleteMessageForUser = async ({ messageId, userId }) => {
+//   const message = await Message.findById(messageId);
+//   if (!message) {
+//     return { error: "Message not found", statusCode: 404 };
+//   }
+
+//   const msgDate = new Date(message.createdAt);
+//   const today = new Date();
+
+//   const isSameDay =
+//     msgDate.getDate() === today.getDate() &&
+//     msgDate.getMonth() === today.getMonth() &&
+//     msgDate.getFullYear() === today.getFullYear();
+
+//   if (!isSameDay) {
+//     return { error: "Chỉ được xóa tin nhắn trong ngày hôm nay", statusCode: 403 };
+//   }
+
+//   if (!message.deletedFor.includes(userId)) {
+//     message.deletedFor.push(userId);
+//     await message.save();
+//   }
+
+//   return { message };
+// };
+//Hung sua 
 exports.deleteMessageForUser = async ({ messageId, userId }) => {
   const message = await Message.findById(messageId);
   if (!message) {
     return { error: "Message not found", statusCode: 404 };
   }
 
-  const msgDate = new Date(message.createdAt);
-  const today = new Date();
+  const isSender = String(message.sender) === String(userId);
 
-  const isSameDay =
-    msgDate.getDate() === today.getDate() &&
-    msgDate.getMonth() === today.getMonth() &&
-    msgDate.getFullYear() === today.getFullYear();
+  // ❌ Chỉ kiểm tra ngày nếu là người gửi
+  if (isSender) {
+    const msgDate = new Date(message.createdAt);
+    const today = new Date();
+    const isSameDay =
+      msgDate.getDate() === today.getDate() &&
+      msgDate.getMonth() === today.getMonth() &&
+      msgDate.getFullYear() === today.getFullYear();
 
-  if (!isSameDay) {
-    return { error: "Chỉ được xóa tin nhắn trong ngày hôm nay", statusCode: 403 };
+    if (!isSameDay) {
+      return { error: "Chỉ được xóa tin nhắn trong ngày hôm nay", statusCode: 403 };
+    }
   }
 
   if (!message.deletedFor.includes(userId)) {
@@ -135,6 +165,9 @@ exports.deleteMessageForUser = async ({ messageId, userId }) => {
 
   return { message };
 };
+
+
+
 
 exports.updateMessageContent = async ({ messageId, userId, newContent }) => {
   const message = await Message.findById(messageId);
@@ -190,3 +223,6 @@ exports.forwardMessage = async ({ messageId, toChatId, sender }) => {
     .populate("sender", "fullName email avatar")
     .populate("chat");
 };
+
+
+

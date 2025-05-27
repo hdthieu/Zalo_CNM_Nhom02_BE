@@ -197,3 +197,23 @@ exports.editMessage = asyncHandler(async (req, res) => {
 
 //   res.status(201).json(newMsg);
 // });
+
+// Xóa tin nhắn ở phía người nhận 
+exports.deleteMessageForReceiver = asyncHandler(async (req, res) => {
+  const { messageId } = req.params;
+  const userId = req.user._id;
+
+  const result = await messageService.deleteMessageForUser({
+    messageId,
+    userId,
+  });
+
+  if (result.error) {
+    return res.status(result.statusCode || 400).json({ message: result.error });
+  }
+
+  res.json({
+    message: "Tin nhắn đã được ẩn khỏi phía bạn (người nhận)",
+    data: result.message,
+  });
+});
