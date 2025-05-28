@@ -134,6 +134,7 @@ exports.authUser = async ({ email, password }) => {
     fullName: user.fullName,
     email: user.email,
     avatar: user.avatar,
+    phoneNumber: user.phoneNumber,
     token: generateToken(user._id),
   };
 };

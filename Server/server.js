@@ -212,6 +212,8 @@ socket.on("cancelFriendRequest", async ({ senderId, receiverId }) => {
 
 
 
+
+
   socket.on("createGroup", (newGroup) => {
     newGroup.users.forEach((userId) => {
       socket.to(userId).emit("newGroupCreated", newGroup);
@@ -246,6 +248,10 @@ socket.on("cancelFriendRequest", async ({ senderId, receiverId }) => {
   });
 
 });
+
+
+
+
 
 server.listen(process.env.PORT || 5000, () => {
   console.log("Server is running on port 5000");
