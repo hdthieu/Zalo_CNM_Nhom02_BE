@@ -267,19 +267,40 @@ exports.getListFriends = asyncHandler(async (req, res) => {
 // Xoa ban be
 exports.removeFriendController = asyncHandler(async (req, res) => {
   const { friendId } = req.body;
-
-  console.log("🔍 friendId:", friendId);
-  console.log("🔐 current userId:", req.user?._id);
+  const userId = req.user?._id;
 
   if (!friendId) {
     return res.status(400).json({ error: "Thiếu friendId" });
   }
 
   try {
-    const result = await userService.removeFriend(req.user._id, friendId);
+    const result = await userService.removeFriend(userId, friendId);
+
+    const io = req.app.get('io'); // Gán io vào app ở server.js
+
+    if (io) {
+      // 👤 Người chủ động xoá bạn
+      io.to(userId.toString()).emit("youRemovedFriend", { friendId });
+
+      // 👥 Người bị xoá
+      io.to(friendId.toString()).emit("youWereRemoved", { userId });
+    }
+
     res.json(result);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
+
+//Phu them 
+exports.getMe = async (req, res, next) => {
+  try {
+    res.status(200).json({
+      status: "success",
+      data: req.user,
+    });
+  } catch (err) {
+    next(err);
+  }
+};

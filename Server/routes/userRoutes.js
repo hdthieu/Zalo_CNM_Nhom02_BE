@@ -8,7 +8,7 @@ const {
   loginController, sendLoginOtp,
   resetPassword, findUsers, getListFriends, verifyLoginOtp, verifyRegisterOtp,
   updatePassword, getUserProfile , updateUserProfile, verifyOtp, sendOtp, resetPasswordForgot,
-  removeFriendController
+  removeFriendController,getMe
 } = require("../controllers/userController");
 const { protect } = require("../middleware/authMiddleware");
 const router = express.Router();
@@ -39,7 +39,8 @@ router.get("/listFriends", protect, getListFriends);
 
 // Hung sua 
 router.put("/removeFriend", protect, removeFriendController);
-
+// Phu them 
+router.get("/get-me", protect, getMe);
 
 
 module.exports = router;
