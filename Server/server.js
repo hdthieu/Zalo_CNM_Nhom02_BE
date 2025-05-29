@@ -115,25 +115,55 @@ io.on("connection", (socket) => {
   // });
 
 // Hung sua 
+// socket.on("sendFriendRequest", async ({ senderId, receiverId }) => {
+//   try {
+//     const sender = await User.findById(senderId);
+//     const receiver = await User.findById(receiverId);
+//     if (!sender || !receiver) return;
+
+//     const existing = await FriendRequest.findOne({
+//       sender: senderId,
+//       receiver: receiverId,
+//     });
+
+//     if (!existing) {
+//       await FriendRequest.create({ sender: senderId, receiver: receiverId });
+//       console.log("✅ Friend request saved:", senderId, "->", receiverId);
+//     } else {
+//       console.log("⚠️ Friend request already exists, re-sending socket event");
+//     }
+
+//     // ✅ Luôn gửi socket event để người nhận thấy lời mời (kể cả nếu đã có trong DB)
+//     io.to(receiverId).emit("friendRequestReceived", {
+//       sender: {
+//         _id: sender._id,
+//         fullName: sender.fullName,
+//         avatar: sender.avatar,
+//       },
+//     });
+
+//     await Notification.create({
+//       user: receiverId,
+//       type: "friend_request",
+//       message: `${sender.fullName} đã gửi lời mời kết bạn`,
+//     });
+//   } catch (error) {
+//     console.error("❌ Error sending friend request:", error.message);
+//   }
+// });
 socket.on("sendFriendRequest", async ({ senderId, receiverId }) => {
   try {
     const sender = await User.findById(senderId);
     const receiver = await User.findById(receiverId);
     if (!sender || !receiver) return;
 
-    const existing = await FriendRequest.findOne({
-      sender: senderId,
-      receiver: receiverId,
-    });
+    const existing = await FriendRequest.findOne({ sender: senderId, receiver: receiverId });
 
     if (!existing) {
       await FriendRequest.create({ sender: senderId, receiver: receiverId });
-      console.log("✅ Friend request saved:", senderId, "->", receiverId);
-    } else {
-      console.log("⚠️ Friend request already exists, re-sending socket event");
     }
 
-    // ✅ Luôn gửi socket event để người nhận thấy lời mời (kể cả nếu đã có trong DB)
+    // 🔽 Gửi lại cho người nhận
     io.to(receiverId).emit("friendRequestReceived", {
       sender: {
         _id: sender._id,
@@ -142,15 +172,16 @@ socket.on("sendFriendRequest", async ({ senderId, receiverId }) => {
       },
     });
 
-    await Notification.create({
-      user: receiverId,
-      type: "friend_request",
-      message: `${sender.fullName} đã gửi lời mời kết bạn`,
+    // ✅ Gửi phản hồi lại cho người gửi để đồng bộ
+    io.to(senderId).emit("friendRequestSent", {
+      receiverId,
     });
+
   } catch (error) {
     console.error("❌ Error sending friend request:", error.message);
   }
 });
+
 //Hung sua 
 socket.on("rejectFriendRequest", async ({ senderId, receiverId }) => {
   try {
@@ -248,6 +279,7 @@ socket.on("cancelFriendRequest", async ({ senderId, receiverId }) => {
   });
 
 });
+
 
 
 

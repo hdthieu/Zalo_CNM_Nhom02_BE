@@ -100,8 +100,13 @@ exports.addToGroupService = async (chatId, userId) => {
     .populate("groupAdmin", "-password");
 
   if (!added) throw new Error("Chat not found");
+
+  // ✅ Kiểm tra phần tử null
+  added.users = (added.users || []).filter((u) => u && u._id);
+
   return added;
 };
+
 
 exports.accessChatSend = async (currentUserId, targetUserId) => {
   let existingChat = await Chat.findOne({
@@ -166,13 +171,21 @@ exports.getGroupUsersService = async (chatId) => {
 };
 
 // Hung sua 
-exports.updateGroupAvatarService = async (chatId, adminId, avatarUrl) => {
+// Hung sua
+exports.updateGroupAvatarService = async (chatId, userId, avatarUrl) => {
   const chat = await Chat.findById(chatId);
 
   if (!chat) throw new Error("Group chat not found");
 
-  if (chat.groupAdmin.toString() !== adminId.toString()) {
-    throw new Error("Only admin can change group avatar");
+  // ❌ Bỏ kiểm tra admin
+  // if (chat.groupAdmin.toString() !== userId.toString()) {
+  //   throw new Error("Only admin can change group avatar");
+  // }
+
+  // ✅ Kiểm tra người dùng có trong nhóm không (bảo mật tối thiểu)
+  const isMember = chat.users.some((u) => u.toString() === userId.toString());
+  if (!isMember) {
+    throw new Error("You must be a member to change group avatar");
   }
 
   chat.groupAvatar = avatarUrl;
@@ -184,3 +197,4 @@ exports.updateGroupAvatarService = async (chatId, adminId, avatarUrl) => {
 
   return updatedChat;
 };
+

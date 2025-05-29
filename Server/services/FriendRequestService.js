@@ -56,11 +56,15 @@ exports.acceptFriendRequest = async (senderId, receiverId, io) => {
     });
     await friendRequest.deleteOne({ _id: request._id });
     if (io) {
-  // Gửi socket cho người gửi để cập nhật danh sách bạn
-  io.to(senderId.toString()).emit("friendRequestAccepted", { sender: receiver });
+  io.to(senderId.toString()).emit("friendRequestAccepted", {
+  sender,
+  receiver
+});
 
-  // Gửi socket cho người nhận để cập nhật danh sách bạn
-  io.to(receiverId.toString()).emit("friendRequestAccepted", { sender });
+io.to(receiverId.toString()).emit("friendRequestAccepted", {
+  sender,
+  receiver
+});
 }
 
 

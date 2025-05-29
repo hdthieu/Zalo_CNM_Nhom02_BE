@@ -244,10 +244,12 @@ exports.sendOtpToEmail = async (email) => {
 // danh sách bạn bè
 exports.listFriends = async (userId) => {
   const user = await User.findById(userId).populate("friends");
-  if (!user) return { message: "Người dùng không tồn tại" };
-  if (user.friends.length === 0)
-    return { message: "Người dùng không có bạn bè" };
-  return user.friends.map((friend) => ({
+
+  if (!user) {
+    throw new Error("Người dùng không tồn tại");
+  }
+
+  const friends = user.friends.map((friend) => ({
     _id: friend._id,
     fullName: friend.fullName,
     avatar: friend.avatar,
@@ -256,7 +258,10 @@ exports.listFriends = async (userId) => {
     gender: friend.gender,
     dateOfBirth: friend.dateOfBirth,
   }));
+
+  return friends; // ✅ luôn là mảng, có thể rỗng []
 };
+
 
 exports.checkUserExists = async (fullName) => {
   const user = await User.findOne({ fullName });
