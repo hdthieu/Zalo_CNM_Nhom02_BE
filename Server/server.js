@@ -13,6 +13,7 @@ const chatModelRoutes = require("./routes/ChatModelRoutes");
 const User = require("./Models/User");
 const FriendRequest = require("./Models/FriendRequest");
 const Notification = require("./Models/Notification");
+const dailyRoutes = require("./routes/DailyRoutes");
 const onlineUsers = new Map();
 connectDB();
 
@@ -28,13 +29,14 @@ const io = new Server(server, {
 app.set("io", io);
 app.use(cors());
 app.use(express.json());
+app.set("onlineUsers", onlineUsers);
 
 // APIs
 app.use("/users", userRoute);
 app.use("/api/friendRequests", friendRoute);
 app.use("/api/chat", chatModelRoutes);
 app.use("/api/message", messageRoute);
-
+app.use("/api/daily", dailyRoutes);
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
@@ -47,6 +49,13 @@ io.on("connection", (socket) => {
     if (!chat?.users?.length) return console.log("No users in chat");
 
     io.to(chat._id.toString()).emit("messageReceived", newMessage);
+    chat.users.forEach((user) => {
+      // console.log("người gửi:", user);
+      io.to(user._id.toString()).emit("newMessageToUser", {
+        chatId: chat._id,
+        message: newMessage,
+      });
+    });
     console.log("Emitted message to room:", chat._id);
   });
   socket.on("recallMessage", async (messageId) => {

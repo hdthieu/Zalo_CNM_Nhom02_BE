@@ -45,6 +45,13 @@ const upload = multer({
       "application/vnd.ms-powerpoint",
       "application/vnd.openxmlformats-officedocument.presentationml.presentation", 
       "audio/mpeg",
+      "audio/mpeg",       // .mp3
+      "audio/wav",        // .wav
+      "audio/ogg",        // .ogg
+      "audio/mp4",        // .m4a
+      "audio/x-m4a",      // .m4a trên Safari/iOS
+      "audio/aac",        // .aac
+      "audio/flac",       // .flac
     ];
 
     // if (allowedMimes.includes(file.mimetype)) {
