@@ -64,8 +64,10 @@ exports.renameGroupService = async (chatId, chatName, userId) => {
     .populate("groupAdmin", "-password");
 
   if (!chat) throw new Error("Chat not found");
-  if (chat.groupAdmin._id.toString() !== userId.toString())
-    throw new Error("You are not the admin of this group");
+
+  // ✅ Cho phép bất kỳ thành viên nào đổi tên nhóm
+  const isMember = chat.users.some((user) => user._id.toString() === userId.toString());
+  if (!isMember) throw new Error("Bạn không phải thành viên của nhóm");
 
   chat.chatName = chatName;
   await chat.save();
@@ -74,6 +76,7 @@ exports.renameGroupService = async (chatId, chatName, userId) => {
 
   return chat;
 };
+
 
 exports.removeFromGroupService = async (chatId, userId) => {
   const removed = await Chat.findByIdAndUpdate(
