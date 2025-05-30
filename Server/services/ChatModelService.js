@@ -33,12 +33,12 @@ exports.fetchChatsService = async (userId) => {
     .populate("groupAdmin", "-password")
     // Hung sua
     .populate({
-  path: "latestMessage",
-  populate: {
-    path: "sender",
-    select: "fullName email avatar"
-  }
-}).sort({ updatedAt: -1 });
+      path: "latestMessage",
+      populate: {
+        path: "sender",
+        select: "fullName email avatar"
+      }
+    }).sort({ updatedAt: -1 });
   return await User.populate(chats, {
     path: "latestMessage.sender",
     select: "fullName email profilePic",
@@ -61,7 +61,12 @@ exports.createGroupChatService = async (users, name, creatorId) => {
 exports.renameGroupService = async (chatId, chatName, userId) => {
   const chat = await Chat.findById(chatId)
     .populate("users", "-password")
-    .populate("groupAdmin", "-password");
+    .populate("groupAdmin", "-password")
+    .populate("latestMessage")
+    .populate({
+      path: "latestMessage.sender",
+      select: "fullName email avatar",
+    });
 
   if (!chat) throw new Error("Chat not found");
 
@@ -85,7 +90,12 @@ exports.removeFromGroupService = async (chatId, userId) => {
     { new: true }
   )
     .populate("users", "-password")
-    .populate("groupAdmin", "-password");
+    .populate("groupAdmin", "-password")
+    .populate("latestMessage")
+    .populate({
+      path: "latestMessage.sender",
+      select: "fullName email avatar",
+    });
 
   if (!removed) throw new Error("Chat not found");
   return removed;
@@ -100,7 +110,12 @@ exports.addToGroupService = async (chatId, userId) => {
     { new: true }
   )
     .populate("users", "-password")
-    .populate("groupAdmin", "-password");
+    .populate("groupAdmin", "-password")
+    .populate("latestMessage")
+    .populate({
+      path: "latestMessage.sender",
+      select: "fullName email avatar",
+    });
 
   if (!added) throw new Error("Chat not found");
 
@@ -155,7 +170,12 @@ exports.transferGroupAdmin = async (chatId, newAdminId, adminId) => {
   await chat.save();
   const updatedChat = await Chat.findById(chatId)
     .populate("users", "-password")
-    .populate("groupAdmin", "-password");
+    .populate("groupAdmin", "-password")
+    .populate("latestMessage")
+    .populate({
+      path: "latestMessage.sender",
+      select: "fullName email avatar",
+    });
 
   return updatedChat;
 };
@@ -196,8 +216,12 @@ exports.updateGroupAvatarService = async (chatId, userId, avatarUrl) => {
 
   const updatedChat = await Chat.findById(chatId)
     .populate("users", "-password")
-    .populate("groupAdmin", "-password");
-
+    .populate("groupAdmin", "-password")
+     .populate("latestMessage")
+    .populate({
+      path: "latestMessage.sender",
+      select: "fullName email avatar",
+    });
   return updatedChat;
 };
 

@@ -118,6 +118,7 @@ exports.dissGroupController = asyncHandler(async (req, res) => {
 
 exports.transferAdController = asyncHandler(async (req, res) => {
   const io = req.app.get("io");
+  
   const adminId = req.user._id;
   const { chatId } = req.params;
   const { newAdminId } = req.body;
@@ -145,9 +146,11 @@ exports.transferAdController = asyncHandler(async (req, res) => {
 
     updatedChat.users.forEach((user) => {
       io.to(user._id.toString()).emit("admin:transferred", {
+        
         chatId: updatedChat._id,
         newAdminId,
       });
+      io.to(user._id.toString()).emit("group:updated", updatedChat);
     });
 
     res.status(200).json(updatedChat);

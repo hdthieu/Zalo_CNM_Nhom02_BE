@@ -77,11 +77,41 @@ io.on("connection", (socket) => {
     socket.to(chatId).emit("messageEdited", updatedMessage);
   });
 
-  socket.on("setup", async (userId) => {
-    console.log("Setup event received for user:", userId);
-    socket.userId = userId;
-    socket.join(userId);
-    onlineUsers.set(userId, socket.id);
+  // socket.on("setup", async (userId) => {
+  //   console.log("Setup event received for user:", userId);
+  //   socket.userId = userId;
+  //   socket.join(userId);
+  //   onlineUsers.set(userId, socket.id);
+  //   await User.findByIdAndUpdate(userId, { status: "online" });
+  //   const user = await User.findById(userId).populate("friends", "_id");
+
+  //   if (!user) {
+  //     console.warn("❗ Không tìm thấy user khi setup socket:", userId);
+  //     return;
+  //   }
+
+  //   if (Array.isArray(user.friends)) {
+  //     user.friends.forEach((friend) => {
+  //       const friendSocketId = onlineUsers.get(friend._id.toString());
+  //       if (friendSocketId) {
+  //         io.to(friendSocketId).emit("friendOnline", { userId });
+  //       }
+  //     });
+  //   }
+  // });
+socket.on("setup", async (userId) => {
+  console.log("Setup event received for user:", userId);
+
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    console.warn("❌ userId không hợp lệ trong setup socket:", userId);
+    return;
+  }
+
+  socket.userId = userId;
+  socket.join(userId);
+  onlineUsers.set(userId, socket.id);
+
+  try {
     await User.findByIdAndUpdate(userId, { status: "online" });
     const user = await User.findById(userId).populate("friends", "_id");
 
@@ -89,7 +119,11 @@ io.on("connection", (socket) => {
       console.warn("❗ Không tìm thấy user khi setup socket:", userId);
       return;
     }
+const onlineFriendIds = user.friends
+      .map(friend => friend._id.toString())
+      .filter(id => onlineUsers.has(id));
 
+    socket.emit("initialOnlineFriends", { userIds: onlineFriendIds });
     if (Array.isArray(user.friends)) {
       user.friends.forEach((friend) => {
         const friendSocketId = onlineUsers.get(friend._id.toString());
@@ -98,7 +132,16 @@ io.on("connection", (socket) => {
         }
       });
     }
-  });
+  } catch (err) {
+    console.error("🔥 Lỗi trong xử lý setup socket:", err);
+  }
+});
+
+
+
+
+
+
 
   // socket.on("sendFriendRequest", async ({ senderId, receiverId }) => {
   //   try {
