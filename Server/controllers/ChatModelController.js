@@ -78,21 +78,30 @@ exports.removeFromGroup = asyncHandler(async (req, res) => {
 
 
 exports.addToGroup = asyncHandler(async (req, res) => {
-  const io = req.app.get("io");
+  const io = req.app.get("io"); // 👈 socket io instance từ app.set()
   const { chatId, userId } = req.body;
 
   const updatedChat = await chatService.addToGroupService(chatId, userId);
 
+  // ✅ Emit đến các user được thêm mới
   const addedUsers = Array.isArray(userId) ? userId : [userId];
   addedUsers.forEach((uid) => {
     io.to(uid.toString()).emit("group:new", updatedChat);
   });
-  updatedChat.users.forEach((user) => {
-    io.to(user._id.toString()).emit("group:updated", updatedChat);
+
+  // ❌ Vị trí gây lỗi: nếu user là undefined thì user._id sẽ crash
+  // Sửa lại như sau:
+  (updatedChat.users || []).forEach((user) => {
+    if (user && user._id) {
+      io.to(user._id.toString()).emit("group:updated", updatedChat);
+    } else {
+      console.warn("❗ User undefined trong updatedChat.users:", user);
+    }
   });
 
   res.status(200).json(updatedChat);
 });
+
 
 exports.dissGroupController = asyncHandler(async (req, res) => {
   const io = req.app.get("io");
@@ -109,6 +118,7 @@ exports.dissGroupController = asyncHandler(async (req, res) => {
 
 exports.transferAdController = asyncHandler(async (req, res) => {
   const io = req.app.get("io");
+  
   const adminId = req.user._id;
   const { chatId } = req.params;
   const { newAdminId } = req.body;
@@ -136,9 +146,11 @@ exports.transferAdController = asyncHandler(async (req, res) => {
 
     updatedChat.users.forEach((user) => {
       io.to(user._id.toString()).emit("admin:transferred", {
+        
         chatId: updatedChat._id,
         newAdminId,
       });
+      io.to(user._id.toString()).emit("group:updated", updatedChat);
     });
 
     res.status(200).json(updatedChat);

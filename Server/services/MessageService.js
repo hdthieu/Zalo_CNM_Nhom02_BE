@@ -212,6 +212,7 @@ exports.forwardMessage = async ({ messageId, toChatId, sender }) => {
     type: original.type,
     chat: toChatId,
     fileUrl: original.fileUrl,
+    fileName: original.fileName,
   });
 
   await Chat.findByIdAndUpdate(toChatId, { latestMessage: forwarded._id });

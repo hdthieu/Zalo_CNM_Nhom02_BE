@@ -7,7 +7,8 @@ const messageSchema = mongoose.Schema({
   fileUrl: { type: String },
   chat: { type: mongoose.Schema.Types.ObjectId, ref: "chatmodels" },
   status: { type: String, enum: ["sent", "seen", "revoked"], default: "sent" },
-  
+  fileName: { type: String }, 
+  isEdited: { type: Boolean, default: false },
   isRecalled: { type: Boolean, default: false },
   recalledAt: { type: Date },
 

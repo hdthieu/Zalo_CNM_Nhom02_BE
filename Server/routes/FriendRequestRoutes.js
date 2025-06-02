@@ -6,6 +6,5 @@ router.post("/addFriend",protect, friendRequestController.sendFriendRequest);
 router.post("/acceptFriend", protect, friendRequestController.acceptFriendRequest);
 // Hung sua 
 router.get("/pending", protect, friendRequestController.getPendingRequests);
-
-
+router.get('/sent', protect, friendRequestController.getSentRequests); 
 module.exports = router;

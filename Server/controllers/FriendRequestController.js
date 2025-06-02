@@ -1,8 +1,8 @@
 const friendRequestService = require("../services/FriendRequestService");
 const user = require("../Models/User");
 // Hung sua 
-const FriendRequest = require("../Models/FriendRequest");
-
+const FriendRequest = require("../Models/FriendRequest"); // ⚠️ PHẢI CÓ
+const asyncHandler = require("express-async-handler");
 exports.sendFriendRequest = async (req, res) => {
   const { senderId, receiverId } = req.body;
   const result = await friendRequestService.sendFriendRequest(
@@ -40,3 +40,10 @@ exports.getPendingRequests = async (req, res) => {
   }
 };
 
+//Hung sua 
+exports.getSentRequests = asyncHandler(async (req, res) => {
+  const sent = await FriendRequest.find({ sender: req.user._id })
+    .populate("receiver", "fullName email avatar");
+
+  res.status(200).json(sent);
+});

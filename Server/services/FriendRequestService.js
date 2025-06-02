@@ -56,8 +56,17 @@ exports.acceptFriendRequest = async (senderId, receiverId, io) => {
     });
     await friendRequest.deleteOne({ _id: request._id });
     if (io) {
-      io.to(receiverId).emit("friendRequestAccepted", { sender });
-    }
+  io.to(senderId.toString()).emit("friendRequestAccepted", {
+  sender,
+  receiver
+});
+
+io.to(receiverId.toString()).emit("friendRequestAccepted", {
+  sender,
+  receiver
+});
+}
+
 
     return { message: "Friend request accepted", status: 200 };
   } catch (error) {

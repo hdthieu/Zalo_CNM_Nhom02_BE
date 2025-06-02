@@ -13,7 +13,8 @@ const chatModelRoutes = require("./routes/ChatModelRoutes");
 const User = require("./Models/User");
 const FriendRequest = require("./Models/FriendRequest");
 const Notification = require("./Models/Notification");
-
+const dailyRoutes = require("./routes/DailyRoutes");
+const onlineUsers = new Map();
 connectDB();
 
 const app = express();
@@ -28,13 +29,14 @@ const io = new Server(server, {
 app.set("io", io);
 app.use(cors());
 app.use(express.json());
+app.set("onlineUsers", onlineUsers);
 
 // APIs
 app.use("/users", userRoute);
 app.use("/api/friendRequests", friendRoute);
 app.use("/api/chat", chatModelRoutes);
 app.use("/api/message", messageRoute);
-
+app.use("/api/daily", dailyRoutes);
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
@@ -47,6 +49,13 @@ io.on("connection", (socket) => {
     if (!chat?.users?.length) return console.log("No users in chat");
 
     io.to(chat._id.toString()).emit("messageReceived", newMessage);
+    chat.users.forEach((user) => {
+      // console.log("người gửi:", user);
+      io.to(user._id.toString()).emit("newMessageToUser", {
+        chatId: chat._id,
+        message: newMessage,
+      });
+    });
     console.log("Emitted message to room:", chat._id);
   });
   socket.on("recallMessage", async (messageId) => {
@@ -68,12 +77,71 @@ io.on("connection", (socket) => {
     socket.to(chatId).emit("messageEdited", updatedMessage);
   });
 
-  socket.on("setup", (userId) => {
-    console.log("Setup event received for user:", userId);
-    socket.userId = userId;
-    socket.join(userId);
-    console.log(`User ${userId} joined personal room`);
-  });
+  // socket.on("setup", async (userId) => {
+  //   console.log("Setup event received for user:", userId);
+  //   socket.userId = userId;
+  //   socket.join(userId);
+  //   onlineUsers.set(userId, socket.id);
+  //   await User.findByIdAndUpdate(userId, { status: "online" });
+  //   const user = await User.findById(userId).populate("friends", "_id");
+
+  //   if (!user) {
+  //     console.warn("❗ Không tìm thấy user khi setup socket:", userId);
+  //     return;
+  //   }
+
+  //   if (Array.isArray(user.friends)) {
+  //     user.friends.forEach((friend) => {
+  //       const friendSocketId = onlineUsers.get(friend._id.toString());
+  //       if (friendSocketId) {
+  //         io.to(friendSocketId).emit("friendOnline", { userId });
+  //       }
+  //     });
+  //   }
+  // });
+socket.on("setup", async (userId) => {
+  console.log("Setup event received for user:", userId);
+
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    console.warn("❌ userId không hợp lệ trong setup socket:", userId);
+    return;
+  }
+
+  socket.userId = userId;
+  socket.join(userId);
+  onlineUsers.set(userId, socket.id);
+
+  try {
+    await User.findByIdAndUpdate(userId, { status: "online" });
+    const user = await User.findById(userId).populate("friends", "_id");
+
+    if (!user) {
+      console.warn("❗ Không tìm thấy user khi setup socket:", userId);
+      return;
+    }
+const onlineFriendIds = user.friends
+      .map(friend => friend._id.toString())
+      .filter(id => onlineUsers.has(id));
+
+    socket.emit("initialOnlineFriends", { userIds: onlineFriendIds });
+    if (Array.isArray(user.friends)) {
+      user.friends.forEach((friend) => {
+        const friendSocketId = onlineUsers.get(friend._id.toString());
+        if (friendSocketId) {
+          io.to(friendSocketId).emit("friendOnline", { userId });
+        }
+      });
+    }
+  } catch (err) {
+    console.error("🔥 Lỗi trong xử lý setup socket:", err);
+  }
+});
+
+
+
+
+
+
 
   // socket.on("sendFriendRequest", async ({ senderId, receiverId }) => {
   //   try {
@@ -114,73 +182,131 @@ io.on("connection", (socket) => {
   //   }
   // });
 
-// Hung sua 
-socket.on("sendFriendRequest", async ({ senderId, receiverId }) => {
-  try {
-    const sender = await User.findById(senderId);
-    const receiver = await User.findById(receiverId);
-    if (!sender || !receiver) return;
+  // Hung sua 
+  // socket.on("sendFriendRequest", async ({ senderId, receiverId }) => {
+  //   try {
+  //     const sender = await User.findById(senderId);
+  //     const receiver = await User.findById(receiverId);
+  //     if (!sender || !receiver) return;
 
-    const existing = await FriendRequest.findOne({
-      sender: senderId,
-      receiver: receiverId,
-    });
+  //     const existing = await FriendRequest.findOne({
+  //       sender: senderId,
+  //       receiver: receiverId,
+  //     });
 
-    if (!existing) {
-      await FriendRequest.create({ sender: senderId, receiver: receiverId });
-      console.log("✅ Friend request saved:", senderId, "->", receiverId);
-    } else {
-      console.log("⚠️ Friend request already exists, re-sending socket event");
+  //     if (!existing) {
+  //       await FriendRequest.create({ sender: senderId, receiver: receiverId });
+  //       console.log("✅ Friend request saved:", senderId, "->", receiverId);
+  //     } else {
+  //       console.log("⚠️ Friend request already exists, re-sending socket event");
+  //     }
+
+  //     // ✅ Luôn gửi socket event để người nhận thấy lời mời (kể cả nếu đã có trong DB)
+  //     io.to(receiverId).emit("friendRequestReceived", {
+  //       sender: {
+  //         _id: sender._id,
+  //         fullName: sender.fullName,
+  //         avatar: sender.avatar,
+  //       },
+  //     });
+
+  //     await Notification.create({
+  //       user: receiverId,
+  //       type: "friend_request",
+  //       message: `${sender.fullName} đã gửi lời mời kết bạn`,
+  //     });
+  //   } catch (error) {
+  //     console.error("❌ Error sending friend request:", error.message);
+  //   }
+  // });
+  socket.on("sendFriendRequest", async ({ senderId, receiverId }) => {
+    try {
+      const sender = await User.findById(senderId);
+      const receiver = await User.findById(receiverId);
+      if (!sender || !receiver) return;
+
+      const existing = await FriendRequest.findOne({ sender: senderId, receiver: receiverId });
+
+      if (!existing) {
+        await FriendRequest.create({ sender: senderId, receiver: receiverId });
+      }
+
+      // 🔽 Gửi lại cho người nhận
+      io.to(receiverId).emit("friendRequestReceived", {
+        sender: {
+          _id: sender._id,
+          fullName: sender.fullName,
+          avatar: sender.avatar,
+        },
+      });
+
+      // ✅ Gửi phản hồi lại cho người gửi để đồng bộ
+      io.to(senderId).emit("friendRequestSent", {
+        receiverId,
+      });
+
+    } catch (error) {
+      console.error("❌ Error sending friend request:", error.message);
     }
+  });
 
-    // ✅ Luôn gửi socket event để người nhận thấy lời mời (kể cả nếu đã có trong DB)
-    io.to(receiverId).emit("friendRequestReceived", {
-      sender: {
-        _id: sender._id,
-        fullName: sender.fullName,
-        avatar: sender.avatar,
-      },
-    });
+  //Hung sua 
+  socket.on("rejectFriendRequest", async ({ senderId, receiverId }) => {
+    try {
+      await FriendRequest.findOneAndDelete({ sender: senderId, receiver: receiverId });
 
-    await Notification.create({
-      user: receiverId,
-      type: "friend_request",
-      message: `${sender.fullName} đã gửi lời mời kết bạn`,
-    });
-  } catch (error) {
-    console.error("❌ Error sending friend request:", error.message);
-  }
-});
-//Hung sua 
-socket.on("rejectFriendRequest", async ({ senderId, receiverId }) => {
-  try {
-    await FriendRequest.findOneAndDelete({ sender: senderId, receiver: receiverId });
+      io.to(senderId).emit("friendRequestRejected", {
+        senderId,
+        receiverId, // để bên client biết xóa đúng ID
+      });
 
-    io.to(senderId).emit("friendRequestRejected", {
-      senderId,
-      receiverId, // để bên client biết xóa đúng ID
-    });
+      console.log(`📤 ${receiverId} từ chối lời mời từ ${senderId}`);
+    } catch (err) {
+      console.error("❌ Lỗi rejectFriendRequest:", err.message);
+    }
+  });
+  //Hung sua 
+  // Gỡ lời mời 
+  socket.on("cancelFriendRequest", async ({ senderId, receiverId }) => {
+    try {
+      await FriendRequest.findOneAndDelete({ sender: senderId, receiver: receiverId });
 
-    console.log(`📤 ${receiverId} từ chối lời mời từ ${senderId}`);
-  } catch (err) {
-    console.error("❌ Lỗi rejectFriendRequest:", err.message);
-  }
-});
-//Hung sua 
-// Gỡ lời mời 
-socket.on("cancelFriendRequest", async ({ senderId, receiverId }) => {
-  try {
-    await FriendRequest.findOneAndDelete({ sender: senderId, receiver: receiverId });
+      // Gửi thông báo cho người nhận để ẩn lời mời khỏi UI nếu đang mở
+      io.to(receiverId).emit("friendRequestCancelled", { senderId });
 
-    // Gửi thông báo cho người nhận để ẩn lời mời khỏi UI nếu đang mở
-    io.to(receiverId).emit("friendRequestCancelled", { senderId });
+      console.log(`🗑️ ${senderId} đã hủy lời mời kết bạn với ${receiverId}`);
+    } catch (err) {
+      console.error("❌ Lỗi cancelFriendRequest:", err.message);
+    }
+  });
+  //Hung sua 
+  // 🔌 Socket - Xoá bạn bè
+  // socket.on("removeFriend", async ({ userId, friendId }) => {
+  //   try {
+  //     const user = await User.findById(userId);
+  //     const friend = await User.findById(friendId);
 
-    console.log(`🗑️ ${senderId} đã hủy lời mời kết bạn với ${receiverId}`);
-  } catch (err) {
-    console.error("❌ Lỗi cancelFriendRequest:", err.message);
-  }
-});
+  //     if (!user || !friend) {
+  //       console.error("Người dùng không tồn tại");
+  //       return;
+  //     }
 
+  //     // Gỡ bạn bè khỏi cả hai bên
+  //     user.friends = user.friends.filter((f) => f.toString() !== friendId);
+  //     friend.friends = friend.friends.filter((f) => f.toString() !== userId);
+
+  //     await user.save();
+  //     await friend.save();
+
+  //     // Gửi sự kiện tới cả hai user để cập nhật UI
+  //     io.to(userId).emit("friendRemoved", { friendId });
+  //     io.to(friendId).emit("friendRemoved", { friendId: userId });
+
+  //     console.log(`❌ Friendship removed between ${userId} and ${friendId}`);
+  //   } catch (error) {
+  //     console.error("❌ Error in removeFriend socket:", error.message);
+  //   }
+  // });
 
 
 
@@ -216,11 +342,39 @@ socket.on("cancelFriendRequest", async ({ senderId, receiverId }) => {
     io.to(to).emit("call-ended");
   });
 
-  socket.on("disconnect", () => {
-    console.log("❌ User disconnected:", socket.id);
+  socket.on("disconnect", async () => {
+    const userId = socket.userId;
+    console.log("User disconnected:", socket.id);
+
+    if (userId) {
+      onlineUsers.delete(userId);
+      await User.findByIdAndUpdate(userId, { status: "offline" });
+
+      // Gửi event cho bạn bè biết user này đã offline
+      const user = await User.findById(userId).populate("friends", "_id");
+      user.friends.forEach((friend) => {
+        const friendSocketId = onlineUsers.get(friend._id.toString());
+        if (friendSocketId) {
+          io.to(friendSocketId).emit("friendOffline", { userId });
+        }
+      });
+    }
   });
+socket.on("getOnlineFriends", async (userId) => {
+  const user = await User.findById(userId).populate("friends", "_id");
+  const onlineFriendIds = user.friends
+    .map(friend => friend._id.toString())
+    .filter(id => onlineUsers.has(id));
+
+  socket.emit("initialOnlineFriends", { userIds: onlineFriendIds });
+});
 
 });
+
+
+
+
+
 
 server.listen(process.env.PORT || 5000, () => {
   console.log("Server is running on port 5000");

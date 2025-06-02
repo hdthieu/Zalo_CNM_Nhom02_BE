@@ -10,13 +10,11 @@ const s3Client = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
-  console.log("🧪 Loaded bucket:", process.env.AWS_BUCKET_NAME);
+
 const upload = multer({
   storage: multerS3({
     s3: s3Client,
     bucket: process.env.AWS_BUCKET_NAME,
-  
-
     metadata: (req, file, cb) => {
       cb(null, { fieldName: file.fieldname });
     },
@@ -29,6 +27,11 @@ const upload = multer({
     fileSize: 50 * 1024 * 1024, // 50MB
   },
   fileFilter: (req, file, cb) => {
+    console.log("📎 Đang kiểm tra file:", file.originalname, "-", file.mimetype);
+      // ✅ Nếu mimetype không có hoặc là "octet-stream", vẫn cho phép
+    if (!file.mimetype || file.mimetype === "application/octet-stream") {
+      return cb(null, true);
+    }
     const allowedMimes = [
       "image/jpeg",
       "image/png",
@@ -42,17 +45,29 @@ const upload = multer({
       "application/vnd.ms-powerpoint",
       "application/vnd.openxmlformats-officedocument.presentationml.presentation", 
       "audio/mpeg",
+      "audio/mpeg",       // .mp3
+      "audio/wav",        // .wav
+      "audio/ogg",        // .ogg
+      "audio/mp4",        // .m4a
+      "audio/x-m4a",      // .m4a trên Safari/iOS
+      "audio/aac",        // .aac
+      "audio/flac",       // .flac
     ];
 
-    if (allowedMimes.includes(file.mimetype)) {
+    // if (allowedMimes.includes(file.mimetype)) {
+    //   cb(null, true);
+    // } else {
+    //   cb(
+    //     new Error(
+    //       "Chỉ hỗ trợ các định dạng JPG, PNG, PDF, MP4, DOC, DOCX, XLS, XLSX, PPT, PPTX"
+    //     ),
+    //     false
+    //   );
+    // }
+      if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(
-        new Error(
-          "Chỉ hỗ trợ các định dạng JPG, PNG, PDF, MP4, DOC, DOCX, XLS, XLSX, PPT, PPTX"
-        ),
-        false
-      );
+      cb(new Error("Không hỗ trợ định dạng này"), false);
     }
   },
 });
